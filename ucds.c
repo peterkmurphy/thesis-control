@@ -38,7 +38,7 @@ typedef uint64_t TLEN;
 
 /* Useful for counting number of test cases. */
 
-#define NUMTESTS 4
+#define NUMTESTS 10
 
 /* Defines minimum matrix size for test 3 with 5 diagonals. */
 
@@ -131,20 +131,110 @@ void destroy_ucds(ucds * ourucds)
 // - dvector: a vector that can be passed in as a double[] type. Note that 
 // the programmer should make sure that there is at least ourucds->lmatsize
 // instances.
+// - dret: a vector to be set to the result of the multiplication. This 
+// must have ourucds->lmatsize values allocated to it already.
 //
-// If successful, the function creates and allocates a vector that is the
-// result of the desired matrix multiplication. Otherwise, it returns 
-// NULL.
+// If successful, the function sets dret to the result of the multiplication.
+// Otherwise, it returns NULL.
 */
 
-FLPT * multiply_ucds(const ucds *ourucds, const FLPT *dvector)
+FLPT * multiply_ucds(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
 {
-    FLPT * dret = (FLPT *) calloc (ourucds->lmatsize,sizeof(FLPT));
+    if ((ourucds == NULL) || (dvector == NULL) || (dret == NULL))
+    {
+        return NULL;
+    }
+    
     INTG i, j; /* Iteration variables */
     INTG lrevindex; /* Current diagonal index to evaluate. */
     INTG miniter, maxiter; /* Sets range to iterate over in value lookup. */
+    
+    for (i = 0; i < ourucds->lmatsize; i++)
+    {
+        dret[i] = 0.0;
+    }
+    
     #pragma omp parallel for private(lrevindex, miniter, maxiter)
     for (i = 0; i < ourucds->lnumdiag; i++)
+    {
+        lrevindex = ourucds->ldiagindices[i];
+        miniter = max(0, lrevindex);
+        maxiter = min(ourucds->lmatsize - 1, ourucds->lmatsize - 1 
+            + lrevindex);
+        #pragma omp parallel for
+        for (j = miniter; j <= maxiter; j++)
+        {
+            dret[j - lrevindex] += ourucds->ddiagelems[i*ourucds->lmatsize 
+                + j] * dvector[j];
+        }
+    }
+    return dret; 
+}
+
+/* 
+// The multiply_ucds27 routine is like the multiply_ucds routine; the only
+// difference is that the number of diagonals is hardwired at 27. This is
+// only used to check how performance is optimised under these conditions.
+// 
+// The multiply_ucds5 is similar, except that the number of diagonals is
+// hardwired at 5.
+//
+// The arguments and return values are otherwise the same.
+*/
+
+FLPT * multiply_ucds27(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
+{
+    if ((ourucds == NULL) || (dvector == NULL) || (dret == NULL))
+    {
+        return NULL;
+    }
+
+    const INTG idiagnum = 27;
+    INTG i, j; /* Iteration variables */
+    INTG lrevindex; /* Current diagonal index to evaluate. */
+    INTG miniter, maxiter; /* Sets range to iterate over in value lookup. */
+    
+    for (i = 0; i < ourucds->lmatsize; i++)
+    {
+        dret[i] = 0.0;
+    }
+    
+    #pragma omp parallel for private(lrevindex, miniter, maxiter)
+    for (i = 0; i < idiagnum; i++)
+    {
+        lrevindex = ourucds->ldiagindices[i];
+        miniter = max(0, lrevindex);
+        maxiter = min(ourucds->lmatsize - 1, ourucds->lmatsize - 1 
+            + lrevindex);
+        #pragma omp parallel for
+        for (j = miniter; j <= maxiter; j++)
+        {
+            dret[j - lrevindex] += ourucds->ddiagelems[i*ourucds->lmatsize 
+                + j] * dvector[j];
+        }
+    }
+    return dret; 
+}
+
+FLPT * multiply_ucds5(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
+{
+    if ((ourucds == NULL) || (dvector == NULL) || (dret == NULL))
+    {
+        return NULL;
+    }
+
+    const INTG idiagnum = 5;
+    INTG i, j; /* Iteration variables */
+    INTG lrevindex; /* Current diagonal index to evaluate. */
+    INTG miniter, maxiter; /* Sets range to iterate over in value lookup. */
+    
+    for (i = 0; i < ourucds->lmatsize; i++)
+    {
+        dret[i] = 0.0;
+    }
+    
+    #pragma omp parallel for private(lrevindex, miniter, maxiter)
+    for (i = 0; i < idiagnum; i++)
     {
         lrevindex = ourucds->ldiagindices[i];
         miniter = max(0, lrevindex);
@@ -234,164 +324,310 @@ TLEN timespecDiff(struct timespec *ptime1, struct timespec *ptime2)
            ((ptime2->tv_sec * NSPERS) + ptime2->tv_nsec);
 }
 
-
-int main(int argc, char *argv[])
-{
-
-    if (argc < 2)
-    {
-        printf ("To execute this, type:\n\nudcs n\n\nWhere n > 1 is the ");
-        printf ("size of the elements to be multiplied and tested.\n");
-        return(0);
-    }
-    const INTG imatsize = atoi(argv[1]);
-    if (imatsize <= 1)
-    {
-        printf ("Please pass a numerical argument greater or equal to 2.\n");
-        return(0);
-    }
-
-    INTG i; /* Iteration variable. */
-    struct timespec start, end; /* Contains test start and end times. */
-    TLEN testLengths[NUMTESTS]; /*Stores the lengths of various tests. */
-    
-/* What we do now is set up a big whopping random test vector. */
-
-    clock_gettime(CLOCK_REALTIME, &start);
-    srand(start.tv_sec * TLPERS + start.tv_nsec);
-    FLPT * dvector = (FLPT *)malloc(imatsize * sizeof (FLPT));
-    if (dvector == NULL)
-    {
-        return (0);
-    }
-    #pragma omp parallel for
-    for (i = 0; i < imatsize; i++)
-    {
-        dvector[i] = (FLPT)rand()/RAND_MAX;
-    }
-
-/* 
-// Now the first test is to see how it multiplies with an identity matrix
-// stored in diagonal form.
+/*
+// The mmtestbed structure allows all the test data for a test to
+// be embedded in one structure. This saves an excess of variables, and
+// an excess of confusion. The components are:
+// - lnumdiag: the number of diagonals for the test.
+// - ldiagindices: the indices of the diagonals in the test. 
+// - ddiagelems: the numerical value used in each diagonals. 
+// - ourucds: the resulting UCDS structure. 
+// - dret: the vector used to contain the result of caclulations. 
+// - thefp: a pointer (of type fpmult) to the multiplication function.
+// - testlen: the time taken to execute the test (in ns).     
+//
+// The fpmult typedef represents pointers to multiplication functions used
+// for these tests.
 */
 
-    const INTG inumsimpdiag = SMALLDIAG;
-    INTG lsimpelems[SMALLDIAG] = {-1, 0, 1};
-    FLPT delems_id[SMALLDIAG] = {0.0, 1.0, 0.0};  
-    ucds * ouriducds = mmatrix_ucds(imatsize, lsimpelems, delems_id, 
-        inumsimpdiag);  
+typedef FLPT * (* fpmult) (const ucds *, const FLPT *, FLPT *);
+
+typedef struct {
+    INTG lnumdiag;
+    INTG * ldiagindices;
+    FLPT * ddiagelems;
+    ucds * ourucds;
+    FLPT * dret;
+    fpmult thefp;
+    TLEN testlen;
+} mmtestbed;
 
 /*
-// The next test is to test how the test vector multiples with a UCDS matrix
-// when the main diagonals are 1, the immediate off diagonals above and below
-// are -1, and all other diagonals are 0. An example of a matrix that looks
-// like it is the following:
-//    
-//    [  4 -1  ]
-//    [ -1  4  ] 
-*/  
+// The dsetvector routine creates and initialises a vector, so that
+// all values are set to one constant. The code is expressed as a
+// routine so that there's no premature optimisation happening from
+// having the functionality inline. Arguments:
+// - isize: the size of the vector.
+// - dvalue: the value to set every element in the vector. 
+//
+// The function returns the vector if successful, and NULL otherwise.
+*/
 
-    FLPT delems_pde[SMALLDIAG] = {-1.0, 4.0, -1.0}; 
-    ucds * ourpdeucds = mmatrix_ucds(imatsize, lsimpelems, delems_pde, 
-        inumsimpdiag);  
 
-/* The next test involves a matrix for a 2D EPDE over a larger grid. */
-    
-    const INTG inummiddiag = MIDDIAG;
-    INTG lmidelems[MIDDIAG] = {-3, -1, 0, 1, 3};
-    FLPT dmidel_vals[MIDDIAG] = {-1.0, -1.0, 4.0, -1.0, -1.0};
-    ucds * ourmiducds = NULL;
-    const INTG middiagbarrier = MINDIAGT3; /* Min matrix size for this test. */
-    if (imatsize >= middiagbarrier)
+FLPT * dsetvector(const INTG isize, const FLPT dvalue)
+{
+    FLPT * dret = (FLPT *) malloc(isize * sizeof (FLPT)); /* Return value. */
+    INTG i; /* Iteration variable. */
+    if (dret == NULL)
     {
-        ourmiducds = mmatrix_ucds(imatsize, lmidelems, dmidel_vals, 
-            inummiddiag);  
+        return NULL;
+    }
+    for (i = 0; i < isize; i++)
+    {
+        dret[i] = dvalue;
+    }
+    return dret;
+}
+
+
+INTG createspdd(INTG inodiags, INTG * ldiagelems, FLPT * ddiagvals)
+{
+    if ((inodiags < 1) || (inodiags % 2 == 0))
+    {
+        return 0; /* inodiags has to be odd to create spd matrices. */
     }
     
-/* Another test involves 27 diagonals - like a 3D EPDE stencil. */ 
-
-    const INTG inumlargdiag = LARGEDIAG;
-    INTG llargelems[LARGEDIAG];
-    FLPT dlargel_vals[LARGEDIAG];
-    for (i = 0; i < LARGEDIAG; i++)
+    INTG i;
+    INTG imidpoint = inodiags / 2;
+    for (i = 0; i < inodiags; i++)
     {
-        llargelems[i] = i - 14;
-        if (i == 14)
+        ldiagelems[i] = i - imidpoint;
+        if (i == imidpoint)
         {
-            dlargel_vals[i] = 26.0;
+            ddiagvals[i] = 2.0 * imidpoint;
         }
         else
         {
-            dlargel_vals[i] = -1.0;          
+            ddiagvals[i] = -1.0;          
         }
-    }
-    ucds * ourlargeucds = NULL;
-    const INTG largediagbarrier = MINDIAGT27; /* Min matrix size . */
-    if (imatsize >= largediagbarrier)
+    }  
+    return 1; /* Success! */
+}
+    
+
+int main(int argc, char *argv[])
+{
+    
+/* 
+// There are two arguments for the program. The first is the size of
+// matrices used for testing. The second is the number of repetitions
+// of matrix multiplication. Both these arguments are necessary, and 
+// there are also lower bounds on acceptable values. The following 
+// code does validation on this.
+*/    
+
+    const INTG iminmatsize = MINDIAGT27;
+    
+    if (argc < 3)
     {
-        ourlargeucds = mmatrix_ucds(imatsize, llargelems, dlargel_vals, 
-            inumlargdiag);  
+        printf("To execute this, type:\n\nudcs n m\n\nWhere:\nn (>= ");
+        printf("%d) ", iminmatsize);
+        printf("is the size of the matrices to be multiplied and tested;");
+        printf("\nm (>= 1) is the number of repetitions.\n\n");
+        return(0);
+    }
+    const INTG imatsize = atoi(argv[1]);
+    if (imatsize < iminmatsize)
+    {
+        printf("Please pass a matrix size greater or equal to %d.\n",
+            iminmatsize);
+        return(0);
+    }
+    const INTG inoreps = atoi(argv[2]);
+    if (inoreps < 1)
+    {
+        printf("Please pass a number of repetitions greater or equal to 1.\n");
+        return(0);
     }    
-    
-    clock_gettime(CLOCK_MONOTONIC, &start);
 
-/* Now we do multiplying and counting the time elapsed. */
+/* 
+// Some useful variables:
+// - i, j: general purpose iteration variables.
+// - start, end: contains start and end times.
+// - dvector: a test vector; consists solely of 1.0s.
+*/
     
-    FLPT * dsame = multiply_ucds(ouriducds, dvector);
-    clock_gettime(CLOCK_MONOTONIC, &end);
-    testLengths[0] = timespecDiff(&end, &start);
-    clock_gettime(CLOCK_MONOTONIC, &start);    
-    FLPT * dpde = multiply_ucds(ourpdeucds, dvector);
-    clock_gettime(CLOCK_MONOTONIC, &end);
-    testLengths[1] = timespecDiff(&end, &start);
-    FLPT * dmidpde = NULL;
-    if (imatsize >= middiagbarrier)
+    INTG i, j;
+    struct timespec start, end;
+    FLPT * dvector = dsetvector(imatsize, 1.0);
+    if (dvector == NULL)
+    {
+        printf("The function is unable to allocate a simple vector.\n"); 
+        return (0);
+    }
+
+    
+/* Now we initialise the test data.*/
+    
+    const INTG inotests = NUMTESTS;
+
+/* Code for 3 diagonal UCDS. */
+    
+    const INTG inumsimpdiag = SMALLDIAG;
+    INTG lsimpelems[SMALLDIAG] = {-1, 0, 1};
+    
+/* For simple identity matrices. */    
+    
+    FLPT delems_id[SMALLDIAG] = {0.0, 1.0, 0.0};  
+    
+/* For simple PDEs. */    
+    
+    FLPT delems_pde[SMALLDIAG] = {-1.0, 4.0, -1.0};     
+    
+/* Code for 5 diagonal UCDS. */
+
+    const INTG inummiddiag = MIDDIAG;
+    INTG lmidelems[MIDDIAG] = {-3, -1, 0, 1, 3};
+    FLPT dmidel_vals[MIDDIAG] = {-1.0, -1.0, 4.0, -1.0, -1.0};    
+
+/* Code for 27 diagonal UCDS. */
+    
+    const INTG inumlargdiag = LARGEDIAG;
+    INTG llargelems[LARGEDIAG];
+    FLPT dlargel_vals[LARGEDIAG];
+    i = createspdd(inumlargdiag, llargelems, dlargel_vals);
+
+    
+/* 
+// Code for other UCDSs with different numbers of diagonals. 
+// The numbers are chosen (9, 15, 45, 81) because they are
+// useful to see how UCDS performs for larger problems, rather
+// than how they do with EPDEs.
+*/
+
+    const INTG inum9 = 9;
+    INTG l9elems[inum9];
+    FLPT d9vals[inum9];
+    i = createspdd(inum9, l9elems, d9vals);    
+    const INTG inum15 = 15;
+    INTG l15elems[inum15];
+    FLPT d15vals[inum15];
+    i = createspdd(inum15, l15elems, d15vals);    
+    const INTG inum45 = 45;
+    INTG l45elems[inum45];
+    FLPT d45vals[inum45];
+    i = createspdd(inum45, l45elems, d45vals);    
+    const INTG inum81 = 81;
+    INTG l81elems[inum81];
+    FLPT d81vals[inum81];
+    i = createspdd(inum81, l81elems, d81vals);    
+  
+    
+    
+    
+    
+    
+/* The test bed itself. */    
+    
+    mmtestbed ourtestbed[inotests];
+    for (i = 0; i < inotests; i++)
+    {
+        ourtestbed[i].dret = (FLPT *) malloc (imatsize * sizeof(FLPT));
+        if (i == 7)
+        {
+            ourtestbed[i].thefp = &multiply_ucds27;
+        }
+        else if (i == 3)
+        {
+            ourtestbed[i].thefp = &multiply_ucds5;
+        }
+        else
+        {
+            ourtestbed[i].thefp = &multiply_ucds;
+        }
+
+/* 
+// Then we set the related objects - the number of diagonals, their indices
+// and their values.
+*/        
+
+        switch(i)
+        {
+            case 0: /* Identity matrix */
+            case 1: /* -1, 4, 1 stencil */
+                ourtestbed[i].lnumdiag = inumsimpdiag;
+                ourtestbed[i].ldiagindices = lsimpelems;
+                if (i == 0)
+                {
+                    ourtestbed[i].ddiagelems = delems_id;
+                }
+                else
+                {
+                    ourtestbed[i].ddiagelems = delems_pde;
+                }
+                break;
+            case 2: /* -1, -1, 4, 1, 1, stencil */
+            case 3: /* Ditto with multiply_ucds5 function. */
+                ourtestbed[i].lnumdiag = inummiddiag;
+                ourtestbed[i].ldiagindices = lmidelems;
+                ourtestbed[i].ddiagelems = dmidel_vals;
+                break;
+            case 4: /* 9 diagonal matrix. */
+                ourtestbed[i].lnumdiag = inum9;
+                ourtestbed[i].ldiagindices = l9elems;
+                ourtestbed[i].ddiagelems = d9vals;
+                break;
+            case 5: /* 15 diagonal matrix. */
+                ourtestbed[i].lnumdiag = inum15;
+                ourtestbed[i].ldiagindices = l15elems;
+                ourtestbed[i].ddiagelems = d15vals;
+                break;                
+            case 6: /* 27 diagonal matrix. */
+            case 7: /* Ditto with multiply_ucds27 */
+                ourtestbed[i].lnumdiag = inumlargdiag;
+                ourtestbed[i].ldiagindices = llargelems;
+                ourtestbed[i].ddiagelems = dlargel_vals;
+                break;
+            case 8: /* 45 diagonal matrix. */
+                ourtestbed[i].lnumdiag = inum45;
+                ourtestbed[i].ldiagindices = l45elems;
+                ourtestbed[i].ddiagelems = d45vals;
+                break;                 
+            default: /* 81 diagonal matrix. */    
+                ourtestbed[i].lnumdiag = inum81;
+                ourtestbed[i].ldiagindices = l81elems;
+                ourtestbed[i].ddiagelems = d81vals;
+                break;             
+        }
+
+/* Then we initialise the UCDS object. */
+        
+        ourtestbed[i].ourucds = mmatrix_ucds(imatsize, 
+            ourtestbed[i].ldiagindices, ourtestbed[i].ddiagelems, 
+            ourtestbed[i].lnumdiag);
+    }
+
+/* Now we run the tests. */
+    
+    for (i = 0; i < inotests; i++)
     {
         clock_gettime(CLOCK_MONOTONIC, &start); 
-        dmidpde = multiply_ucds(ourmiducds, dvector);
+        for (j = 0; j < inoreps; j++)
+        {
+            ourtestbed[i].dret = (* ourtestbed[i].thefp)(ourtestbed[i].ourucds,
+            dvector, ourtestbed[i].dret);
+        } 
         clock_gettime(CLOCK_MONOTONIC, &end);
-        testLengths[2] = timespecDiff(&end, &start);
+        ourtestbed[i].testlen = timespecDiff(&end, &start);
     }
-    else
-    {
-        testLengths[2] = 0;
-    }
-    FLPT * dlargpde = NULL;
-    if (imatsize >= largediagbarrier)
-    {
-        clock_gettime(CLOCK_MONOTONIC, &start); 
-        dlargpde = multiply_ucds(ourlargeucds, dvector);
-        clock_gettime(CLOCK_MONOTONIC, &end);
-        testLengths[3] = timespecDiff(&end, &start);
-    }
-    else
-    {
-        testLengths[3] = 0;
-    }
-    for (i = 0; i < NUMTESTS; i++)
-    {
-        printf("%f, ", (FLPT)testLengths[i]/TLPERS);
+    
 
+/* Then we print the tests. */    
+
+    for (i = 0; i < inotests; i++)
+    {
+        printf("%f, ", (FLPT)((1.0 * TLPERS * imatsize * inoreps * 
+            ourtestbed[i].lnumdiag)/(1000000.0 * ourtestbed[i].testlen)));
     }
     printf("%d\n", imatsize);
     
-/* The last stage is to free up all the memory used. */  
-
-    if (imatsize >= largediagbarrier)
+/* The last state is to free up all the memory used. */
+    
+    free(dvector); 
+    for (i = 0; i < inotests; i++)
     {
-        destroy_ucds(ourlargeucds);
-        free(dlargpde);
+        free(ourtestbed[i].dret);
+        destroy_ucds(ourtestbed[i].ourucds);
     }
-    if (imatsize >= middiagbarrier)
-    {
-        destroy_ucds(ourmiducds);
-        free(dmidpde);
-    }
-    destroy_ucds(ouriducds);  
-    destroy_ucds(ourpdeucds);  
-    free(dpde);
-    free(dsame);
-    free(dvector);  
-
     return 0;
 }
