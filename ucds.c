@@ -1,102 +1,152 @@
 /* 
-// cds.c. Implementation of Ultra Compressed Diagonal Storage.
+// ucds.c. Implementation of Ultra Compressed Diagonal Storage.
 // Written by Peter Murphy. (c) 2013
 */
 
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <time.h>
 #include <omp.h>
+#include "ucds.h"
 
-/* Quick and dirty min and max. */
+/* Function implementations. */
 
-#define max(x, y) (((x) > (y)) ? (x) : (y))
-#define min(x, y) (((x) < (y)) ? (x) : (y))
+FLPT * dassign(const INTG isize)
+{
+    return (FLPT *)malloc(isize * sizeof(FLPT));
+}
 
-/* 
-// We use typedefs for integers and floating point numbers so their size
-// and base types can be changed in one place.
-*/
 
-typedef int INTG;
-typedef double FLPT;
+FLPT ddotprod (const INTG lvectsize, const FLPT * dleftvec, 
+    const FLPT * drightvec)
+{
+    INTG i; /* An iteration variable. */
+    FLPT dresult = 0.0; /* The result. */
+    #pragma omp parallel for reduction(+:dresult)
+    for (i = 0; i < lvectsize; i++)
+    {
+        dresult += (dleftvec[i] * drightvec[i]);
+    }
+    return dresult;
+}
 
-/* We use a typedef for storing time lengths. */
 
-typedef uint64_t TLEN;
+FLPT * dscalarprod (const INTG lvectsize, const FLPT dscalar, 
+    const FLPT * dvectin, FLPT * dvectout)
+{
+    INTG i; /* An iteration variable. */
+    #pragma omp parallel for
+    for (i = 0; i < lvectsize; i++)
+    {
+        dvectout[i] = dscalar * dvectin[i];
+    }
+    return dvectout;
+}
 
-/* And timelengths per second. On Linux, it is 10^9 for nanoseconds. */
 
-#define TLPERS 1000000000
+FLPT * dvectadd (const INTG lvectsize, const FLPT * dleftvec, 
+    const FLPT * drightvec, FLPT * dvectout)
+{
+    INTG i; /* An iteration variable. */
+    #pragma omp parallel for
+    for (i = 0; i < lvectsize; i++)
+    {
+        dvectout[i] = dleftvec[i] + drightvec[i];
+    }
+    return dvectout;
+}
 
-/* Useful for defining number of diagonals in matrices. */
 
-#define SMALLDIAG 3
-#define MIDDIAG 5
-#define LARGEDIAG 27
+FLPT * dvectsub (const INTG lvectsize, const FLPT * dleftvec, 
+    const FLPT * drightvec, FLPT * dvectout)
+{
+    INTG i; /* An iteration variable. */
+    #pragma omp parallel for
+    for (i = 0; i < lvectsize; i++)
+    {
+        dvectout[i] = dleftvec[i] - drightvec[i];
+    }
+    return dvectout;
+}
 
-/* Useful for counting number of test cases. */
 
-#define NUMTESTS 10
+FLPT dvectnorm (const INTG lvectsize, const INTG mode, 
+    const FLPT * dvectin)
+{
+    INTG i; /* An iteration variable. */
+    FLPT dresult = 0.0; /* The result. */
+    if (mode == 1)
+    {
+        #pragma omp parallel for reduction(+:dresult)
+        for (i = 0; i < lvectsize; i++)
+        {
+            dresult += fabs(dvectin[i]);
+        }
+    }
+    else if (mode == 2)
+    {
+        #pragma omp parallel for reduction(+:dresult)
+        for (i = 0; i < lvectsize; i++)
+        {
+            dresult += pow(dvectin[i], 2);
+        }
+        dresult = sqrt(dresult);
+    }
+    else /* Infinity mode */
+    {
+        #pragma omp parallel for 
+        for (i = 0; i < lvectsize; i++)
+        {
+            #pragma omp critical
+            if (dresult < dvectin[i])
+            {
+                dresult = dvectin[i];
+            }
+        }
+    }        
+    return dresult;
+}
 
-/* Defines minimum matrix size for test 3 with 5 diagonals. */
-
-#define MINDIAGT3 4
-
-/* Defines minimum matrix size for test with 27 diagonals. */
-
-#define MINDIAGT27 14
-
-/* 
-// The ucds ("Ultra Compressed Diagonal Storage") scheme is a modification
-// of the cds scheme defined above. Rather than store diagonals as a 
-// contiguous band, store individual diagonals with their diagonal index.
-// The type is more suitable for the matrices created by 3D EPDEs (or their
-// discretisation thereof). To make storage and lookup more efficient, the
-// values in all diagonals are stored in one big double[], rather than a
-// double[][] or a **double.
-// 
-// For each element A[i][j] in A, we assign it to the diagonal with an index
-// (j - i). We then define the ucds structure as follows:
-// - lmatsize: the size of the square matrix represented.
-// - lnumdiag: the number of diagonals represented.
-// - ldiagindices: an array of the indices of the diagonals stored here.
-// - ddiagelems: an array of the elements in the diagonal. The length of the
-// array is ldiagindex*lmatsize, and the first element of the i-th diagonal
-// is at ddiagelems[i*lmatsize].
-//
-// Example: the following matrix: 
-//
-//                                [ 1 2 ]
-//                                [ 3 4 ] 
-//
-// Would have lmatsize = 2, lnumdiag = 3, ldiagindices = [-1, 0, 1] and
-// ddiagelems = [3.0, N, 1.0, 4.0, N, 2.0]. Here, N means not important.
-*/    
-
-typedef struct {
-    INTG lmatsize;
-    INTG lnumdiag;
-    INTG * ldiagindices; 
-    FLPT *ddiagelems; 
-} ucds;
-
-/* 
-// The create_ucds function creates and allocates an instance of the ucds 
-// structure using the following arguments:
-//
-// - lmatsize: the size of the square matrix represented.
-// - ldiagindices: an array of diagonal indices (in ascending order with
-//   no repeated values).
-// - lnumdiag: the size of ldiagindices.
-//
-// If successful, a ucds* is returned; otherwise, the function returns NULL.
-//
-// Note 1: the user has to initialise the values themselves.
-// Note 2: unpredicatable behaviour may result if ldiagindices is unsorted
-// or contains repeated values.
-*/
+FLPT daltnorm (const INTG lvectsize, const INTG mode, 
+    const FLPT * dvectin)
+{
+    FLPT dresult = 0.0; /* The result. */
+    if (lvectsize == 1)
+    {
+        return fabs(dvectin[0]);
+    }
+    INTG lhalf = lvectsize / 2;
+    INTG lremd = lvectsize - lhalf;
+    FLPT fbr1;
+    FLPT fbr2;
+    FLPT * dsndptr = &(dvectin[lhalf]);
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        {
+            fbr1 = daltnorm(lhalf, mode, dvectin);
+        } 
+        #pragma omp section
+        {
+            fbr2 = daltnorm(lremd, mode, dsndptr);
+        } 
+    }    
+    if (mode == 1)
+    {
+        dresult = fbr1 + fbr2;
+    }
+    else if (mode == 2)
+    {
+        dresult = sqrt(pow(fbr1,2) + pow(fbr2, 2));
+    }
+    else /* Infinity mode */
+    {
+        dresult = max(fbr1, fbr2);
+    }        
+    return dresult;
+}
 
 ucds* create_ucds(const INTG lmatsize, INTG * ldiagindices, const INTG lnumdiag)
 {
@@ -110,12 +160,9 @@ ucds* create_ucds(const INTG lmatsize, INTG * ldiagindices, const INTG lnumdiag)
     ourucds->lmatsize = lmatsize;
     ourucds->lnumdiag = lnumdiag;
     ourucds->ldiagindices = ldiagindices;
-    ourucds->ddiagelems = (FLPT *)malloc(lnumdiag * lmatsize * 
-        sizeof(FLPT));
+    ourucds->ddiagelems = dassign(lnumdiag * lmatsize);
     return ourucds;
 }
-
-/* The destroy_ucds function deallocates and destroys a ucds instance. */
 
 void destroy_ucds(ucds * ourucds)
 {
@@ -123,20 +170,6 @@ void destroy_ucds(ucds * ourucds)
     free(ourucds);
 }
 
-/* 
-// The multiply_ucds performs matrix vector multiplication using the ucds type.
-// The arguments are:
-//
-// - ourucds: a pointer to a ucds instance.
-// - dvector: a vector that can be passed in as a double[] type. Note that 
-// the programmer should make sure that there is at least ourucds->lmatsize
-// instances.
-// - dret: a vector to be set to the result of the multiplication. This 
-// must have ourucds->lmatsize values allocated to it already.
-//
-// If successful, the function sets dret to the result of the multiplication.
-// Otherwise, it returns NULL.
-*/
 
 FLPT * multiply_ucds(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
 {
@@ -154,7 +187,40 @@ FLPT * multiply_ucds(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
         dret[i] = 0.0;
     }
     
-    #pragma omp parallel for private(lrevindex, miniter, maxiter)
+    #pragma omp parallel for private(lrevindex, miniter, maxiter, j)
+    for (i = 0; i < ourucds->lnumdiag; i++)
+    {
+        lrevindex = ourucds->ldiagindices[i];
+        miniter = max(0, lrevindex);
+        maxiter = min(ourucds->lmatsize - 1, ourucds->lmatsize - 1 
+            + lrevindex);
+        //#pragma omp parallel for
+        for (j = miniter; j <= maxiter; j++)
+        {
+            dret[j - lrevindex] += ourucds->ddiagelems[i*ourucds->lmatsize 
+                + j] * dvector[j];
+        }
+    }
+    return dret; 
+}
+
+FLPT * multiply_ucdsalt(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
+{
+    if ((ourucds == NULL) || (dvector == NULL) || (dret == NULL))
+    {
+        return NULL;
+    }
+    
+    INTG i, j; /* Iteration variables */
+    INTG lrevindex; /* Current diagonal index to evaluate. */
+    INTG miniter, maxiter; /* Sets range to iterate over in value lookup. */
+    
+    for (i = 0; i < ourucds->lmatsize; i++)
+    {
+        dret[i] = 0.0;
+    }
+    
+    //##pragma omp parallel for private(lrevindex, miniter, maxiter, j)
     for (i = 0; i < ourucds->lnumdiag; i++)
     {
         lrevindex = ourucds->ldiagindices[i];
@@ -171,16 +237,6 @@ FLPT * multiply_ucds(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
     return dret; 
 }
 
-/* 
-// The multiply_ucds27 routine is like the multiply_ucds routine; the only
-// difference is that the number of diagonals is hardwired at 27. This is
-// only used to check how performance is optimised under these conditions.
-// 
-// The multiply_ucds5 is similar, except that the number of diagonals is
-// hardwired at 5.
-//
-// The arguments and return values are otherwise the same.
-*/
 
 FLPT * multiply_ucds27(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
 {
@@ -199,7 +255,42 @@ FLPT * multiply_ucds27(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
         dret[i] = 0.0;
     }
     
-    #pragma omp parallel for private(lrevindex, miniter, maxiter)
+    #pragma omp parallel for private(lrevindex, miniter, maxiter, j)
+    for (i = 0; i < idiagnum; i++)
+    {
+        lrevindex = ourucds->ldiagindices[i];
+        miniter = max(0, lrevindex);
+        maxiter = min(ourucds->lmatsize - 1, ourucds->lmatsize - 1 
+            + lrevindex);
+        //#pragma omp parallel for
+        for (j = miniter; j <= maxiter; j++)
+        {
+            dret[j - lrevindex] += ourucds->ddiagelems[i*ourucds->lmatsize 
+                + j] * dvector[j];
+        }
+    }
+    return dret; 
+}
+
+
+FLPT * multiply_ucdsalt27(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
+{
+    if ((ourucds == NULL) || (dvector == NULL) || (dret == NULL))
+    {
+        return NULL;
+    }
+
+    const INTG idiagnum = 27;
+    INTG i, j; /* Iteration variables */
+    INTG lrevindex; /* Current diagonal index to evaluate. */
+    INTG miniter, maxiter; /* Sets range to iterate over in value lookup. */
+    
+    for (i = 0; i < ourucds->lmatsize; i++)
+    {
+        dret[i] = 0.0;
+    }
+    
+    //#pragma omp parallel for private(lrevindex, miniter, maxiter, j)
     for (i = 0; i < idiagnum; i++)
     {
         lrevindex = ourucds->ldiagindices[i];
@@ -215,6 +306,7 @@ FLPT * multiply_ucds27(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
     }
     return dret; 
 }
+
 
 FLPT * multiply_ucds5(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
 {
@@ -233,7 +325,41 @@ FLPT * multiply_ucds5(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
         dret[i] = 0.0;
     }
     
-    #pragma omp parallel for private(lrevindex, miniter, maxiter)
+    #pragma omp parallel for private(lrevindex, miniter, maxiter, j)
+    for (i = 0; i < idiagnum; i++)
+    {
+        lrevindex = ourucds->ldiagindices[i];
+        miniter = max(0, lrevindex);
+        maxiter = min(ourucds->lmatsize - 1, ourucds->lmatsize - 1 
+            + lrevindex);
+        //#pragma omp parallel for
+        for (j = miniter; j <= maxiter; j++)
+        {
+            dret[j - lrevindex] += ourucds->ddiagelems[i*ourucds->lmatsize 
+                + j] * dvector[j];
+        }
+    }
+    return dret; 
+}
+
+FLPT * multiply_ucdsalt5(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
+{
+    if ((ourucds == NULL) || (dvector == NULL) || (dret == NULL))
+    {
+        return NULL;
+    }
+
+    const INTG idiagnum = 5;
+    INTG i, j; /* Iteration variables */
+    INTG lrevindex; /* Current diagonal index to evaluate. */
+    INTG miniter, maxiter; /* Sets range to iterate over in value lookup. */
+    
+    for (i = 0; i < ourucds->lmatsize; i++)
+    {
+        dret[i] = 0.0;
+    }
+    
+    //#pragma omp parallel for private(lrevindex, miniter, maxiter, j)
     for (i = 0; i < idiagnum; i++)
     {
         lrevindex = ourucds->ldiagindices[i];
@@ -249,25 +375,6 @@ FLPT * multiply_ucds5(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
     }
     return dret; 
 }
-
-/* 
-// mmatrix_ucds generates a "sample" M-matrix in ucds form. A M-matrix is 
-// a matrix which is strictly diagonally dominant, but all off-diagonal 
-// entries are negative or zero. The arguments are:
-//
-// - lmatsize: the size of the square matrix represented.
-// - ldiagindices: an array of diagonal indices (in ascending order with
-//   no repeated values).
-// - ddiagvals: a list of values to set the diagonals for the indices.
-//   listed in ldiagindices.
-// - lindicessize: the size of ldiagindices (and ddiagvals).
-//
-// If successful, a ucds* is returned; otherwise, the function returns NULL.
-//
-// Note: the conditions for M-matrixhood are checked when initialising 
-// the structure. If they aren't satisfied, the function returns NULL.
-*/
-
 
 ucds * mmatrix_ucds(const INTG lmatsize, INTG * ldiagindices, FLPT *
     ddiagvals, const INTG lnumdiag)
@@ -324,49 +431,9 @@ TLEN timespecDiff(struct timespec *ptime1, struct timespec *ptime2)
            ((ptime2->tv_sec * NSPERS) + ptime2->tv_nsec);
 }
 
-/*
-// The mmtestbed structure allows all the test data for a test to
-// be embedded in one structure. This saves an excess of variables, and
-// an excess of confusion. The components are:
-// - lnumdiag: the number of diagonals for the test.
-// - ldiagindices: the indices of the diagonals in the test. 
-// - ddiagelems: the numerical value used in each diagonals. 
-// - ourucds: the resulting UCDS structure. 
-// - dret: the vector used to contain the result of caclulations. 
-// - thefp: a pointer (of type fpmult) to the multiplication function.
-// - testlen: the time taken to execute the test (in ns).     
-//
-// The fpmult typedef represents pointers to multiplication functions used
-// for these tests.
-*/
-
-typedef FLPT * (* fpmult) (const ucds *, const FLPT *, FLPT *);
-
-typedef struct {
-    INTG lnumdiag;
-    INTG * ldiagindices;
-    FLPT * ddiagelems;
-    ucds * ourucds;
-    FLPT * dret;
-    fpmult thefp;
-    TLEN testlen;
-} mmtestbed;
-
-/*
-// The dsetvector routine creates and initialises a vector, so that
-// all values are set to one constant. The code is expressed as a
-// routine so that there's no premature optimisation happening from
-// having the functionality inline. Arguments:
-// - isize: the size of the vector.
-// - dvalue: the value to set every element in the vector. 
-//
-// The function returns the vector if successful, and NULL otherwise.
-*/
-
-
 FLPT * dsetvector(const INTG isize, const FLPT dvalue)
 {
-    FLPT * dret = (FLPT *) malloc(isize * sizeof (FLPT)); /* Return value. */
+    FLPT * dret = dassign(isize); /* Return value. */
     INTG i; /* Iteration variable. */
     if (dret == NULL)
     {
@@ -378,7 +445,6 @@ FLPT * dsetvector(const INTG isize, const FLPT dvalue)
     }
     return dret;
 }
-
 
 INTG createspdd(INTG inodiags, INTG * ldiagelems, FLPT * ddiagvals)
 {
@@ -403,10 +469,182 @@ INTG createspdd(INTG inodiags, INTG * ldiagelems, FLPT * ddiagvals)
     }  
     return 1; /* Success! */
 }
+
+/*
+// Constructs doverwrite = doverright + dconst * drightvec.
+*/
+
+FLPT * dvecoverwrite (const INTG lvectsize, FLPT * doverwrite, 
+    const FLPT dconst, const FLPT * drightvec)
+{
+    INTG i; /* An iteration variable. */
+    #pragma omp parallel for
+    for (i = 0; i < lvectsize; i++)
+    {
+        doverwrite[i] += dconst * drightvec[i];
+    }
+    return doverwrite;
+}
+
+FLPT * dveccopy (const INTG lvectsize, FLPT * doverwrite, 
+    const FLPT *dsource)
+{
+    INTG i; /* An iteration variable. */
+    #pragma omp parallel for
+    for (i = 0; i < lvectsize; i++)
+    {
+        doverwrite[i] = dsource[i];
+    }
+    return doverwrite;
+}
+
+
+FLPT * dvecadjust (const INTG lvectsize, FLPT * dadjust, 
+    const FLPT *dleftvec, const FLPT dleftconst, const FLPT * drightvec, const FLPT drightconst)
+{
+    INTG i; /* An iteration variable. */
+    #pragma omp parallel for
+    for (i = 0; i < lvectsize; i++)
+    {
+        dadjust[i] = (dleftvec[i] * dleftconst) + (drightvec[i] * drightconst);
+    }
+    return dadjust;
+}
+
+void printvector(char* name, INTG isize, const FLPT* fvector)
+{
+    printf("%s: [", name);
+    INTG i;
+    for (i = 0; i < (isize - 1); i++)
+    {
+        printf("%f, ", fvector[i]);
+    }
+    printf("%f]\n", fvector[isize - 1]);
+}
+
+
+FLPT * conjgrad(const ucds * ucdsa, const FLPT * dvectb, const FLPT *dvectx0,
+    FLPT * dvectx, const INTG imode, const INTG itype, const FLPT derror, INTG * iiter)
+{
+    INTG icount = 0; /* The iteration count. */
+    INTG ivectorsize = ucdsa->lmatsize; /* The size of all matrices and vectors. */
+    FLPT * drvect[2]; /* Stores r_even and r_odd vectors. */
+    FLPT drdotpd[2]; /* Stores dot products of same. */
+    FLPT * dpvect = dassign(ivectorsize); /* Stores p vector. */
+    FLPT * dapproduct = dassign(ivectorsize); /* Stores products of A and p_k. */
+    FLPT dalpha, dbeta; /* Alpha and beta. */
     
+/* Initialise the algorithm. */
+
+    drvect[0] = dassign(ivectorsize);
+    drvect[1] = dassign(ivectorsize);
+    printvector("b", ivectorsize, dvectb);
+    printvector("x0", ivectorsize, dvectx0);
+    dapproduct = multiply_ucds(ucdsa, dvectx0, dapproduct);
+    printvector("a.p", ivectorsize, dapproduct);
+    drvect[0] = dvectsub (ivectorsize, dvectb, dapproduct, drvect[0]);
+    printvector("r", ivectorsize, drvect[0]);
+    dveccopy(ivectorsize, dpvect, drvect[0]);
+    dveccopy(ivectorsize, dvectx, dvectx0);
+    printvector("p", ivectorsize, dpvect);
+    drdotpd[icount % 2] = ddotprod(ivectorsize, drvect[icount % 2], drvect[icount % 2]);
+    while (1)
+    {
+        dapproduct = multiply_ucds(ucdsa, dpvect, dapproduct);
+        printvector("a.p", ivectorsize, dapproduct);
+        dalpha = drdotpd[icount % 2] / ddotprod(ivectorsize, dpvect, dapproduct);
+        printf("alpha: %f\n", dalpha);
+        printvector("x", ivectorsize, dvectx);
+        dvecoverwrite (ivectorsize, dvectx, dalpha, dpvect);
+        printvector("x1", ivectorsize, dvectx);
+        drvect[(icount + 1) % 2] = dvecadjust (ivectorsize, drvect[(icount + 1) % 2], 
+            drvect[icount % 2], 1.0, dapproduct, dalpha * (-1.0));
+        printvector("r", ivectorsize, drvect[(icount + 1) % 2]);
+        if (itype == 0)
+        {
+            printf("%d\n", dvectnorm(ivectorsize, imode, drvect[(icount + 1) % 2]));
+            if (dvectnorm(ivectorsize, imode, drvect[(icount + 1) % 2]) < derror)
+            {
+                break;
+            }
+        }
+        else
+        {
+            if (daltnorm(ivectorsize, imode, drvect[(icount + 1) % 2]) < derror)
+            {
+                break;
+            }
+        }
+        drdotpd[(icount % 2) + 1] = ddotprod(ivectorsize, drvect[(icount % 2) + 1], drvect[(icount % 2) + 1]);
+        dbeta = ddotprod(ivectorsize, drvect[(icount + 1) % 2], drvect[(icount + 1) % 2])
+             / ddotprod(ivectorsize, drvect[icount % 2], drvect[icount % 2]);
+        printf("beta: %f\n", dbeta);
+        dpvect = dvecadjust (ivectorsize, dpvect, drvect[(icount + 1) % 2], 1.0, 
+            dpvect, dbeta); 
+        printvector("p", ivectorsize, dpvect);        
+        icount = icount + 1;
+    }
+    printf("D");
+    if (iiter != NULL)
+    {
+        *iiter = icount;
+    }
+    free(dpvect);
+    free(dapproduct);
+    free (drvect[0]);
+    free (drvect[1]);
+    printvector("x", ivectorsize, dvectx);
+    return dvectx;
+}
+
+void testconjgrad()
+{
+    printf("Before");    
+    INTG ldiagindices[3] = {-1, 0, 1};
+    FLPT ddiagvals[3] = {1.0, 4.0, 1.0};    
+    ucds * ucdsa = mmatrix_ucds(2, ldiagindices, ddiagvals, 3);
+    ucdsa->ddiagelems[3] = 3.0;
+ //   printf("%f", ucdsa->ddiagelems[0]);
+    FLPT * vectb = dassign(2);
+    vectb[0] = 1.0;
+    vectb[1] = 2.0;
+    FLPT * vectx0 = dassign(2);
+    vectx0[1] = 1.0;
+    vectx0[0] = 2.0;
+    FLPT * vectx = dassign(2);
+    printf("Before");
+    conjgrad(ucdsa, vectb, vectx0, vectx, 1, 0, 0.1, NULL);
+    free(vectb);
+    free(vectx);
+    free(vectx0);
+    destroy_ucds(ucdsa);
+}
+    
+ 
+
 
 int main(int argc, char *argv[])
 {
+    INTG tldiagindices[3] = {-1, 0, 1};
+    FLPT tddiagvals[3] = {1.0, 4.0, 1.0};    
+    ucds * ucdsa = mmatrix_ucds(2, tldiagindices, tddiagvals, 3);
+    ucdsa->ddiagelems[3] = 3.0;
+    printvector("ucds", 6, ucdsa->ddiagelems);
+    FLPT * vectb = dassign(2);
+    vectb[0] = 1.0;
+    vectb[1] = 2.0;
+    FLPT * vectx0 = dassign(2);
+    vectx0[1] = 1.0;
+    vectx0[0] = 2.0;
+    FLPT * vectx = dassign(2);
+    conjgrad(ucdsa, vectb, vectx0, vectx, 2, 0, 0.1, NULL);
+    free(vectb);
+    free(vectx);
+    free(vectx0);
+    destroy_ucds(ucdsa);    
+    
+    
+  //  testconjgrad();
     
 /* 
 // There are two arguments for the program. The first is the size of
@@ -511,10 +749,6 @@ int main(int argc, char *argv[])
     INTG l81elems[inum81];
     FLPT d81vals[inum81];
     i = createspdd(inum81, l81elems, d81vals);    
-  
-    
-    
-    
     
     
 /* The test bed itself. */    
@@ -522,18 +756,18 @@ int main(int argc, char *argv[])
     mmtestbed ourtestbed[inotests];
     for (i = 0; i < inotests; i++)
     {
-        ourtestbed[i].dret = (FLPT *) malloc (imatsize * sizeof(FLPT));
+        ourtestbed[i].dret = dassign(imatsize);
         if (i == 7)
         {
-            ourtestbed[i].thefp = &multiply_ucds27;
+            ourtestbed[i].thefp = &multiply_ucdsalt27;
         }
         else if (i == 3)
         {
-            ourtestbed[i].thefp = &multiply_ucds5;
+            ourtestbed[i].thefp = &multiply_ucdsalt5;
         }
         else
         {
-            ourtestbed[i].thefp = &multiply_ucds;
+            ourtestbed[i].thefp = &multiply_ucdsalt;
         }
 
 /* 
@@ -610,20 +844,153 @@ int main(int argc, char *argv[])
         clock_gettime(CLOCK_MONOTONIC, &end);
         ourtestbed[i].testlen = timespecDiff(&end, &start);
     }
+ 
+    
+/* 
+// What we now do is time the subsidiary operations created for
+// the conjugate gradient operation.
+*/
+    
+    FLPT tdotprod;
+    FLPT tscalprod;
+    FLPT tvectadd;
+    FLPT tvectsub;
+    FLPT tnorm1;
+    FLPT tnorm2;
+    FLPT tnorminf;
+    FLPT taltnorm1;
+    FLPT taltnorm2;
+    FLPT taltnorminf;
+
+/* These are dummy variables for taking the outputs of functions. */
+
+    FLPT ddummy;
+    FLPT * dvectout = dsetvector(imatsize, 0.0);
+    
+/* Here are the tests. */    
+    
+    clock_gettime(CLOCK_MONOTONIC, &start); 
+    for (j = 0; j < inoreps; j++)
+    {
+        ddummy = ddotprod (imatsize, dvector, dvector);
+    } 
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    printf ("%f: ", ddummy);
+    tdotprod = (1.0 * TLPERS * inoreps * imatsize) /
+        (MEGAHERTZ * timespecDiff(&end, &start)); 
+
+    
+    clock_gettime(CLOCK_MONOTONIC, &start); 
+    for (j = 0; j < inoreps; j++)
+    {
+        dvectout = dscalarprod (imatsize, 2.0, dvector, dvectout);
+    } 
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    tscalprod = (1.0 * TLPERS * inoreps * imatsize) /
+        (MEGAHERTZ * timespecDiff(&end, &start));     
+    
+
+    clock_gettime(CLOCK_MONOTONIC, &start); 
+    for (j = 0; j < inoreps; j++)
+    {
+        dvectout = dvectadd(imatsize, dvector, dvector, dvectout);
+    } 
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    tvectadd = (1.0 * TLPERS * inoreps * imatsize) /
+        (MEGAHERTZ * timespecDiff(&end, &start));    
+    
+
+    clock_gettime(CLOCK_MONOTONIC, &start); 
+    for (j = 0; j < inoreps; j++)
+    {
+        dvectout = dvectsub(imatsize, dvector, dvector, dvectout);
+    } 
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    tvectsub = (1.0 * TLPERS * inoreps * imatsize) /
+        (MEGAHERTZ * timespecDiff(&end, &start));  
+
+    clock_gettime(CLOCK_MONOTONIC, &start); 
+    for (j = 0; j < inoreps; j++)
+    {
+        ddummy = dvectnorm(imatsize, 1, dvector);
+    } 
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    printf ("%f: ", ddummy);
+    tnorm1 = (1.0 * TLPERS * inoreps * imatsize) /
+        (MEGAHERTZ * timespecDiff(&end, &start));     
+    
+    clock_gettime(CLOCK_MONOTONIC, &start); 
+    for (j = 0; j < inoreps; j++)
+    {
+        ddummy = dvectnorm(imatsize, 2, dvector);
+    } 
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    printf ("%f: ", ddummy);
+    tnorm2 = (1.0 * TLPERS * inoreps * imatsize) /
+        (MEGAHERTZ * timespecDiff(&end, &start));  
+
+    clock_gettime(CLOCK_MONOTONIC, &start); 
+    for (j = 0; j < inoreps; j++)
+    {
+        ddummy = dvectnorm(imatsize, 3, dvector);
+    } 
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    printf ("%f: ", ddummy);
+    tnorminf = (1.0 * TLPERS * inoreps * imatsize) /
+        (MEGAHERTZ * timespecDiff(&end, &start));
+
+
+    clock_gettime(CLOCK_MONOTONIC, &start); 
+    for (j = 0; j < inoreps; j++)
+    {
+        ddummy = daltnorm(imatsize, 1, dvector);
+    } 
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    printf ("%f: ", ddummy);
+    taltnorm1 = (1.0 * TLPERS * inoreps * imatsize) /
+        (MEGAHERTZ * timespecDiff(&end, &start));     
+    
+    clock_gettime(CLOCK_MONOTONIC, &start); 
+    for (j = 0; j < inoreps; j++)
+    {
+        ddummy = daltnorm(imatsize, 2, dvector);
+    } 
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    printf ("%f: ", ddummy);
+    taltnorm2 = (1.0 * TLPERS * inoreps * imatsize) /
+        (MEGAHERTZ * timespecDiff(&end, &start));  
+
+    clock_gettime(CLOCK_MONOTONIC, &start); 
+    for (j = 0; j < inoreps; j++)
+    {
+        ddummy = daltnorm(imatsize, 3, dvector);
+    } 
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    printf ("%f: ", ddummy);
+    taltnorminf = (1.0 * TLPERS * inoreps * imatsize) /
+        (MEGAHERTZ * timespecDiff(&end, &start));
+
+
+
     
 
 /* Then we print the tests. */    
 
+    printf("%f, %f, %f, %f, %f, %f, %f, %f, %f, %f; ", tdotprod, tscalprod, tvectadd,
+        tvectsub, tnorm1, tnorm2, tnorminf, taltnorm1, taltnorm2, taltnorminf);
+    
+    
     for (i = 0; i < inotests; i++)
     {
-        printf("%f, ", (FLPT)((1.0 * TLPERS * imatsize * inoreps * 
+        printf("%f - ", (FLPT)((1.0 * TLPERS * imatsize * inoreps * 
             ourtestbed[i].lnumdiag)/(1000000.0 * ourtestbed[i].testlen)));
     }
     printf("%d\n", imatsize);
     
 /* The last state is to free up all the memory used. */
     
-    free(dvector); 
+    free(dvector);
+    free(dvectout);    
     for (i = 0; i < inotests; i++)
     {
         free(ourtestbed[i].dret);

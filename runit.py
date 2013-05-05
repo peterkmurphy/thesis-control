@@ -16,7 +16,7 @@ OPENMP_OPTIONS = ["", "mp"];
 # These give ranges to try out.
 
 MINMATSIZE = 1024;
-MAXMATSIZE = 1000000;
+MAXMATSIZE = 8193 #1000000;
 
 # Now we try out the executables.
 
