@@ -22,7 +22,6 @@ int main(int argc, char *argv[])
     printvector("b", 2, vectb);
     FLPT * vectx = dassign(2);
  //   conjgrad(ucdsa, vectb, vectx0, vectx, 2, 0, 0.1, NULL);
-    printf("Heeya\n");
     dconjgrad(ucdsa, vectb, vectx0, vectx, &multiply_ucds, &dvectnorm, 0, 0.1, NULL);
     printvector("x", 2, vectx);
     FLPT * vectbnew = dassign(2);

@@ -18,6 +18,32 @@ FLPT * dassign(const INTG isize)
     return (FLPT *)malloc(isize * sizeof(FLPT));
 }
 
+FLPT * dsetvector(const INTG isize, const FLPT dvalue)
+{
+    FLPT * dret = dassign(isize); /* Return value. */
+    INTG i; /* Iteration variable. */
+    if (dret == NULL)
+    {
+        return NULL;
+    }
+    for (i = 0; i < isize; i++)
+    {
+        dret[i] = dvalue;
+    }
+    return dret;
+}
+
+FLPT * dveccopy (const INTG lvectsize, FLPT * doverwrite, 
+    const FLPT *dsource)
+{
+    INTG i; /* An iteration variable. */
+    #pragma omp parallel for
+    for (i = 0; i < lvectsize; i++)
+    {
+        doverwrite[i] = dsource[i];
+    }
+    return doverwrite;
+}
 
 FLPT ddotprod (const INTG lvectsize, const FLPT * dleftvec, 
     const FLPT * drightvec)
@@ -32,6 +58,10 @@ FLPT ddotprod (const INTG lvectsize, const FLPT * dleftvec,
     return dresult;
 }
 
+FLPT dselfdprod(const INTG lvectsize, const FLPT * dvector)
+{
+    return ddotprod(lvectsize, dvector, dvector);
+}
 
 FLPT * dscalarprod (const INTG lvectsize, const FLPT dscalar, 
     const FLPT * dvectin, FLPT * dvectout)
@@ -45,7 +75,6 @@ FLPT * dscalarprod (const INTG lvectsize, const FLPT dscalar,
     return dvectout;
 }
 
-
 FLPT * dvectadd (const INTG lvectsize, const FLPT * dleftvec, 
     const FLPT * drightvec, FLPT * dvectout)
 {
@@ -58,7 +87,6 @@ FLPT * dvectadd (const INTG lvectsize, const FLPT * dleftvec,
     return dvectout;
 }
 
-
 FLPT * dvectsub (const INTG lvectsize, const FLPT * dleftvec, 
     const FLPT * drightvec, FLPT * dvectout)
 {
@@ -69,6 +97,32 @@ FLPT * dvectsub (const INTG lvectsize, const FLPT * dleftvec,
         dvectout[i] = dleftvec[i] - drightvec[i];
     }
     return dvectout;
+}
+
+FLPT * daddinsitu (const INTG lvectsize, FLPT * doverwrite, 
+    const FLPT dconst, const FLPT * drightvec)
+{
+    INTG i; /* An iteration variable. */
+    #pragma omp parallel for
+    for (i = 0; i < lvectsize; i++)
+    {
+        doverwrite[i] += dconst * drightvec[i];
+    }
+    return doverwrite;
+}
+
+FLPT * daddtwosums (const INTG lvectsize, FLPT * dadjust, 
+    const FLPT *dleftvec, const FLPT dleftconst, 
+    const FLPT * drightvec, const FLPT drightconst)
+{
+    INTG i; /* An iteration variable. */
+    #pragma omp parallel for
+    for (i = 0; i < lvectsize; i++)
+    {
+        dadjust[i] = (dleftvec[i] * dleftconst) + 
+            (drightvec[i] * drightconst);
+    }
+    return dadjust;
 }
 
 
@@ -164,12 +218,75 @@ ucds* create_ucds(const INTG lmatsize, INTG * ldiagindices, const INTG lnumdiag)
     return ourucds;
 }
 
+ucds * mmatrix_ucds(const INTG lmatsize, INTG * ldiagindices, FLPT *
+    ddiagvals, const INTG lnumdiag)
+{
+    
+/* 
+// Before allocating space for the cds, we have to check that parameters 
+// make a M-matrix creation possible.
+*/
+
+    if ((ldiagindices[0] > 0) || (ldiagindices[lnumdiag - 1] < 0))
+    {
+        return NULL;
+    }
+    
+    register FLPT dsum = 0.0; /* This checks diagonal dominance. */ 
+    INTG i, j; /* Iteration variables. */
+    for (i = 0; i < lnumdiag; i++)
+    {
+        dsum += ddiagvals[i];
+    }
+    if (dsum < 0.0)
+    {
+        return NULL;
+    }
+    
+/* Now we can allocate the cds. */    
+    
+    ucds * ourucds = create_ucds(lmatsize, ldiagindices, lnumdiag);
+    #pragma omp parallel for
+    for (i = 0; i < lnumdiag; i++)
+    {
+        #pragma omp parallel for
+        for (j = 0; j < lmatsize; j++)
+        {
+            ourucds->ddiagelems[i*lmatsize + j] = ddiagvals[i];
+        }
+    }
+    return ourucds;
+}
+
+INTG createspdd(INTG inodiags, INTG * ldiagelems, FLPT * ddiagvals)
+{
+    if ((inodiags < 1) || (inodiags % 2 == 0))
+    {
+        return 0; /* inodiags has to be odd to create spd matrices. */
+    }
+    
+    INTG i;
+    INTG imidpoint = inodiags / 2;
+    for (i = 0; i < inodiags; i++)
+    {
+        ldiagelems[i] = i - imidpoint;
+        if (i == imidpoint)
+        {
+            ddiagvals[i] = 2.0 * imidpoint;
+        }
+        else
+        {
+            ddiagvals[i] = -1.0;          
+        }
+    }  
+    return 1; /* Success! */
+}
+
 void destroy_ucds(ucds * ourucds)
 {
     free(ourucds->ddiagelems); 
     free(ourucds);
 }
-
 
 FLPT * multiply_ucds(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
 {
@@ -237,7 +354,6 @@ FLPT * multiply_ucdsalt(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
     return dret; 
 }
 
-
 FLPT * multiply_ucds27(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
 {
     if ((ourucds == NULL) || (dvector == NULL) || (dret == NULL))
@@ -272,7 +388,6 @@ FLPT * multiply_ucds27(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
     return dret; 
 }
 
-
 FLPT * multiply_ucdsalt27(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
 {
     if ((ourucds == NULL) || (dvector == NULL) || (dret == NULL))
@@ -306,7 +421,6 @@ FLPT * multiply_ucdsalt27(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
     }
     return dret; 
 }
-
 
 FLPT * multiply_ucds5(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
 {
@@ -376,45 +490,6 @@ FLPT * multiply_ucdsalt5(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
     return dret; 
 }
 
-ucds * mmatrix_ucds(const INTG lmatsize, INTG * ldiagindices, FLPT *
-    ddiagvals, const INTG lnumdiag)
-{
-    
-/* 
-// Before allocating space for the cds, we have to check that parameters 
-// make a M-matrix creation possible.
-*/
-
-    if ((ldiagindices[0] > 0) || (ldiagindices[lnumdiag - 1] < 0))
-    {
-        return NULL;
-    }
-    
-    register FLPT dsum = 0.0; /* This checks diagonal dominance. */ 
-    INTG i, j; /* Iteration variables. */
-    for (i = 0; i < lnumdiag; i++)
-    {
-        dsum += ddiagvals[i];
-    }
-    if (dsum < 0.0)
-    {
-        return NULL;
-    }
-    
-/* Now we can allocate the cds. */    
-    
-    ucds * ourucds = create_ucds(lmatsize, ldiagindices, lnumdiag);
-    #pragma omp parallel for
-    for (i = 0; i < lnumdiag; i++)
-    {
-        #pragma omp parallel for
-        for (j = 0; j < lmatsize; j++)
-        {
-            ourucds->ddiagelems[i*lmatsize + j] = ddiagvals[i];
-        }
-    }
-    return ourucds;
-}
 
 /*
 // The following routine is adapted from the following Stack Overflow
@@ -431,172 +506,16 @@ TLEN timespecDiff(struct timespec *ptime1, struct timespec *ptime2)
            ((ptime2->tv_sec * NSPERS) + ptime2->tv_nsec);
 }
 
-FLPT * dsetvector(const INTG isize, const FLPT dvalue)
-{
-    FLPT * dret = dassign(isize); /* Return value. */
-    INTG i; /* Iteration variable. */
-    if (dret == NULL)
-    {
-        return NULL;
-    }
-    for (i = 0; i < isize; i++)
-    {
-        dret[i] = dvalue;
-    }
-    return dret;
-}
-
-INTG createspdd(INTG inodiags, INTG * ldiagelems, FLPT * ddiagvals)
-{
-    if ((inodiags < 1) || (inodiags % 2 == 0))
-    {
-        return 0; /* inodiags has to be odd to create spd matrices. */
-    }
-    
-    INTG i;
-    INTG imidpoint = inodiags / 2;
-    for (i = 0; i < inodiags; i++)
-    {
-        ldiagelems[i] = i - imidpoint;
-        if (i == imidpoint)
-        {
-            ddiagvals[i] = 2.0 * imidpoint;
-        }
-        else
-        {
-            ddiagvals[i] = -1.0;          
-        }
-    }  
-    return 1; /* Success! */
-}
-
-/*
-// Constructs doverwrite = doverright + dconst * drightvec.
-*/
-
-FLPT * dvecoverwrite (const INTG lvectsize, FLPT * doverwrite, 
-    const FLPT dconst, const FLPT * drightvec)
-{
-    INTG i; /* An iteration variable. */
-    #pragma omp parallel for
-    for (i = 0; i < lvectsize; i++)
-    {
-        doverwrite[i] += dconst * drightvec[i];
-    }
-    return doverwrite;
-}
-
-FLPT * dveccopy (const INTG lvectsize, FLPT * doverwrite, 
-    const FLPT *dsource)
-{
-    INTG i; /* An iteration variable. */
-    #pragma omp parallel for
-    for (i = 0; i < lvectsize; i++)
-    {
-        doverwrite[i] = dsource[i];
-    }
-    return doverwrite;
-}
-
-
-FLPT * dvecadjust (const INTG lvectsize, FLPT * dadjust, 
-    const FLPT *dleftvec, const FLPT dleftconst, const FLPT * drightvec, const FLPT drightconst)
-{
-    INTG i; /* An iteration variable. */
-    #pragma omp parallel for
-    for (i = 0; i < lvectsize; i++)
-    {
-        dadjust[i] = (dleftvec[i] * dleftconst) + (drightvec[i] * drightconst);
-    }
-    return dadjust;
-}
-
-void printvector(char* name, INTG isize, const FLPT* fvector)
+void printvector(const char* name, INTG isize, const FLPT* dvector)
 {
     printf("%s: [", name);
     INTG i;
     for (i = 0; i < (isize - 1); i++)
     {
-        printf("%f, ", fvector[i]);
+        printf("%f, ", dvector[i]);
     }
-    printf("%f]\n", fvector[isize - 1]);
+    printf("%f]\n", dvector[isize - 1]);
 }
-
-
-FLPT * conjgrad(const ucds * ucdsa, const FLPT * dvectb, const FLPT *dvectx0,
-    FLPT * dvectx, const INTG imode, const INTG itype, const FLPT derror, INTG * iiter)
-{
-    INTG icount = 0; /* The iteration count. */
-    INTG ivectorsize = ucdsa->lmatsize; /* The size of all matrices and vectors. */
-    FLPT * drvect[2]; /* Stores r_even and r_odd vectors. */
-    FLPT drdotpd[2]; /* Stores dot products of same. */
-    FLPT * dpvect = dassign(ivectorsize); /* Stores p vector. */
-    FLPT * dapproduct = dassign(ivectorsize); /* Stores products of A and p_k. */
-    FLPT dalpha, dbeta; /* Alpha and beta. */
-    
-/* Initialise the algorithm. */
-
-    drvect[0] = dassign(ivectorsize);
-    drvect[1] = dassign(ivectorsize);
-    printvector("b", ivectorsize, dvectb);
-    printvector("x0", ivectorsize, dvectx0);
-    dapproduct = multiply_ucds(ucdsa, dvectx0, dapproduct);
-    printvector("a.p", ivectorsize, dapproduct);
-    drvect[0] = dvectsub (ivectorsize, dvectb, dapproduct, drvect[0]);
-    printvector("r", ivectorsize, drvect[0]);
-    dveccopy(ivectorsize, dpvect, drvect[0]);
-    dveccopy(ivectorsize, dvectx, dvectx0);
-    printvector("p", ivectorsize, dpvect);
-    drdotpd[icount % 2] = ddotprod(ivectorsize, drvect[icount % 2], drvect[icount % 2]);
-    while (1)
-    {
-        dapproduct = multiply_ucds(ucdsa, dpvect, dapproduct);
-        printvector("a.p", ivectorsize, dapproduct);
-        dalpha = drdotpd[icount % 2] / ddotprod(ivectorsize, dpvect, dapproduct);
-        printf("alpha: %f\n", dalpha);
-        printvector("x", ivectorsize, dvectx);
-        dvecoverwrite (ivectorsize, dvectx, dalpha, dpvect);
-        printvector("x1", ivectorsize, dvectx);
-        drvect[(icount + 1) % 2] = dvecadjust (ivectorsize, drvect[(icount + 1) % 2], 
-            drvect[icount % 2], 1.0, dapproduct, dalpha * (-1.0));
-        printvector("r", ivectorsize, drvect[(icount + 1) % 2]);
-        if (itype == 0)
-        {
-            printf("%d\n", dvectnorm(ivectorsize, imode, drvect[(icount + 1) % 2]));
-            if (dvectnorm(ivectorsize, imode, drvect[(icount + 1) % 2]) < derror)
-            {
-                break;
-            }
-        }
-        else
-        {
-            if (daltnorm(ivectorsize, imode, drvect[(icount + 1) % 2]) < derror)
-            {
-                break;
-            }
-        }
-        drdotpd[(icount % 2) + 1] = ddotprod(ivectorsize, drvect[(icount % 2) + 1], drvect[(icount % 2) + 1]);
-        dbeta = ddotprod(ivectorsize, drvect[(icount + 1) % 2], drvect[(icount + 1) % 2])
-             / ddotprod(ivectorsize, drvect[icount % 2], drvect[icount % 2]);
-        printf("beta: %f\n", dbeta);
-        dpvect = dvecadjust (ivectorsize, dpvect, drvect[(icount + 1) % 2], 1.0, 
-            dpvect, dbeta); 
-        printvector("p", ivectorsize, dpvect);        
-        icount = icount + 1;
-    }
-    printf("D");
-    if (iiter != NULL)
-    {
-        *iiter = icount;
-    }
-    free(dpvect);
-    free(dapproduct);
-    free (drvect[0]);
-    free (drvect[1]);
-    printvector("x", ivectorsize, dvectx);
-    return dvectx;
-}
-
 
 FLPT * dconjgrad(const ucds * ucdsa, const FLPT * dvectb, const FLPT *dvectx0,
     FLPT * dvectx, fpmult fpucdsmult, fpnorm fpdnorm, const INTG imode, 
@@ -618,23 +537,26 @@ FLPT * dconjgrad(const ucds * ucdsa, const FLPT * dvectb, const FLPT *dvectx0,
     drvect[0] = dvectsub (ivectorsize, dvectb, dapproduct, drvect[0]);
     dveccopy(ivectorsize, dpvect, drvect[0]);
     dveccopy(ivectorsize, dvectx, dvectx0);
-    drdotpd[icount % 2] = ddotprod(ivectorsize, drvect[icount % 2], drvect[icount % 2]);
+    drdotpd[icount % 2] = dselfdprod(ivectorsize, drvect[icount % 2]);
     while (1)
     {
         dapproduct = fpucdsmult(ucdsa, dpvect, dapproduct);
-        dalpha = drdotpd[icount % 2] / ddotprod(ivectorsize, dpvect, dapproduct);
-        dvecoverwrite (ivectorsize, dvectx, dalpha, dpvect);
-        drvect[(icount + 1) % 2] = dvecadjust (ivectorsize, drvect[(icount + 1) % 2], 
-            drvect[icount % 2], 1.0, dapproduct, dalpha * (-1.0));
+        dalpha = drdotpd[icount % 2] / ddotprod(ivectorsize, dpvect, 
+            dapproduct);
+        daddinsitu(ivectorsize, dvectx, dalpha, dpvect);
+        drvect[(icount + 1) % 2] = daddtwosums(ivectorsize, 
+            drvect[(icount + 1) % 2], drvect[icount % 2], 1.0, 
+            dapproduct, dalpha * (-1.0));
         if (fpdnorm(ivectorsize, imode, drvect[(icount + 1) % 2]) < derror)
         {
             break;
         }        
-        drdotpd[(icount % 2) + 1] = ddotprod(ivectorsize, drvect[(icount % 2) + 1], drvect[(icount % 2) + 1]);
-        dbeta = ddotprod(ivectorsize, drvect[(icount + 1) % 2], drvect[(icount + 1) % 2])
-             / ddotprod(ivectorsize, drvect[icount % 2], drvect[icount % 2]);
-        dpvect = dvecadjust (ivectorsize, dpvect, drvect[(icount + 1) % 2], 1.0, 
-            dpvect, dbeta); 
+        drdotpd[(icount % 2) + 1] = dselfdprod(ivectorsize, 
+            drvect[(icount % 2) + 1]);
+        dbeta = dselfdprod(ivectorsize, drvect[(icount + 1) % 2])
+             / dselfdprod(ivectorsize, drvect[icount % 2]);
+        dpvect = daddtwosums(ivectorsize, dpvect, drvect[(icount + 1) % 2], 
+            1.0, dpvect, dbeta); 
         icount = icount + 1;
     }
     if (iiter != NULL)
@@ -648,32 +570,5 @@ FLPT * dconjgrad(const ucds * ucdsa, const FLPT * dvectb, const FLPT *dvectx0,
     return dvectx;
 }
 
-
-
-
-void testconjgrad()
-{
-    printf("Before");    
-    INTG ldiagindices[3] = {-1, 0, 1};
-    FLPT ddiagvals[3] = {1.0, 4.0, 1.0};    
-    ucds * ucdsa = mmatrix_ucds(2, ldiagindices, ddiagvals, 3);
-    ucdsa->ddiagelems[3] = 3.0;
- //   printf("%f", ucdsa->ddiagelems[0]);
-    FLPT * vectb = dassign(2);
-    vectb[0] = 1.0;
-    vectb[1] = 2.0;
-    FLPT * vectx0 = dassign(2);
-    vectx0[1] = 1.0;
-    vectx0[0] = 2.0;
-    FLPT * vectx = dassign(2);
-    printf("Before");
-    dconjgrad(ucdsa, vectb, vectx0, vectx, &multiply_ucds, &dvectnorm, 0, 0.1, NULL);
-    free(vectb);
-    free(vectx);
-    free(vectx0);
-    destroy_ucds(ucdsa);
-}
-    
- 
 
 

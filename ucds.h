@@ -81,6 +81,17 @@ FLPT * dassign(const INTG isize);
 
 FLPT * dsetvector(const INTG isize, const FLPT dvalue);
 
+/* 
+// The dveccopy copies a vector from one value to another. Arguments:
+// lvectsize: the size of the vector.
+// doverwrite: the destination vector.
+// dsource: the dsource vector.
+// The function returns doverwrite.
+*/
+
+FLPT * dveccopy (const INTG lvectsize, FLPT * doverwrite, 
+    const FLPT *dsource);
+
 /*
 // The dot product performs the dot product of two vectors and returns
 // the result. The arguments:
@@ -91,6 +102,16 @@ FLPT * dsetvector(const INTG isize, const FLPT dvalue);
 
 FLPT ddotprod (const INTG lvectsize, const FLPT * dleftvec, 
     const FLPT * drightvec);
+
+/*
+// The dselfdprod performs the dot product between a vector and itself.
+// The arguments:
+// - lvecsize: the size of the vector arguments;
+// - dvector: the vector itself.
+// The function returns the result.
+*/
+
+FLPT dselfdprod(const INTG lvectsize, const FLPT * dvector);
 
 /*
 // The scalar product performs the product between a scalar and a vector
@@ -129,6 +150,32 @@ FLPT * dvectadd (const INTG lvectsize, const FLPT * dleftvec,
 FLPT * dvectsub (const INTG lvectsize, const FLPT * dleftvec, 
     const FLPT * drightvec, FLPT * dvectout);
 
+/*
+// The daddinsitu function effectively calculates doverwrite += 
+// dconst * drightvec. It is used as it is quicker to modify an
+// existing vector rather than create one anew with the right
+// value. Arguments:
+// lvecsize: the size of the vector.
+// doverwrite: the vector to be added to and adjusted.
+// dconst: the amount to multiply drightvect by in the sum.
+// drightvec: the vector to be added on the right hand side (when
+// multiplied by dconst).
+// The function returns doverwrite.
+*/
+
+FLPT * daddinsitu (const INTG lvectsize, FLPT * doverwrite, 
+    const FLPT dconst, const FLPT * drightvec);
+
+/*
+// The daddtwosums functions overwrites dadjust as follows:
+// dadjust = dleftconst * dleftvect + dreftconst * dreftvect.
+// lvectsize is the size of the vector. The function returns
+// dadjust.
+*/
+
+FLPT * daddtwosums (const INTG lvectsize, FLPT * dadjust, 
+    const FLPT *dleftvec, const FLPT dleftconst, 
+    const FLPT * drightvec, const FLPT drightconst);
 /* 
 // The dvectnorm function calculates the norm of a vector. Arguments:
 // lvectsize: the size of the vector.
@@ -343,6 +390,28 @@ typedef struct {
     TLEN testlen;
 } mmtestbed;
 
+
+/*
+// The timespecDiff routine gives the differences in nanoseconds between
+// two events ptime1 (the end) and ptime2 (the start).
+*/
+
+TLEN timespecDiff(struct timespec *ptime1, struct timespec *ptime2);
+
+/*
+// The printvector function prints a vector to standard output. The
+// arguments:
+// name: the name of the variable represented.
+// isize: the size of the vector.
+// dvector: the vector.
+// The function returns no arguments.
+*/
+
+void printvector(const char* name, INTG isize, const FLPT* dvector);
+
+
+
+
 /*
 // The dconjgrad function is an implementation of the conjugate gradient
 // algorithm - a Kyrlov subspace iterative method for returning the 
@@ -366,25 +435,5 @@ typedef struct {
 FLPT * dconjgrad(const ucds * ucdsa, const FLPT * dvectb, const FLPT *dvectx0,
     FLPT * dvectx, fpmult fpucdsmult, fpnorm fpdnorm, const INTG imode, 
     const FLPT derror, INTG * iiter);
-
-/*
-// Kept for backup.
-
-FLPT * conjgrad(const ucds * ucdsa, const FLPT * dvectb, const FLPT *dvectx0,
-    FLPT * dvectx, const INTG imode, const INTG itype, const FLPT derror, 
-    INTG * iiter);
-    
-//
-*/
-
-
-
-    
-
-
-
-
-
-
 
 #endif /* UCDS_H */    
