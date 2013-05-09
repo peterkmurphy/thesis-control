@@ -20,21 +20,8 @@ for eff in EFF_OPTIONS:
     for ismp in [True, False]:
         if ismp:
             x = subprocess.call(["gcc", "-Wall", OPENMPOP, EFF_OP, "ucds.c", 
-                "-o", "mpucds" + eff, "-lrt"]);
+                "testucds.c", "-o", "mpucds" + eff, "-lrt", "-lm"]);
         else:
             x = subprocess.call(["gcc", "-Wall", EFF_OP, "ucds.c", 
-                "-o", "ucds" + eff, "-lrt"]);            
-        
-
-
-
-#OPTTOFILE = {"": "ucds", "-O1": "ucds1", "-O2": "ucds2", 
-#    "-O3": "ucds3", "-Ofast": "ucdsf"};
-#    
-#for k, v in OPTTOFILE.iteritems():
-#    if k == "":
-#        x = subprocess.call(["gcc", "-Wall", "ucds.c", "-o", v, "-lrt"]);
-#    else:
-#        x = subprocess.call(["gcc", "-Wall", "ucds.c", k, "-o", v, "-lrt"]);
-        
+                "testucds.c", "-o", "ucds" + eff, "-lrt", "-lm"]);            
 
