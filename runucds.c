@@ -1,5 +1,5 @@
 /* 
-// testucds.c. Runs tests on Ultra Compressed Diagonal Storage.
+// runucds.c. Runs tests on Ultra Compressed Diagonal Storage.
 // Written by Peter Murphy. (c) 2013
 */
 
@@ -8,36 +8,6 @@
 
 int main(int argc, char *argv[])
 {
-    INTG tldiagindices[3] = {-1, 0, 1};
-    FLPT tddiagvals[3] = {1.0, 4.0, 1.0};    
-    ucds * ucdsa = mmatrix_ucds(2, tldiagindices, tddiagvals, 3);
-    ucdsa->ddiagelems[3] = 3.0;
-    printvector("ucds", 6, ucdsa->ddiagelems);
-    FLPT * vectb = dassign(2);
-    vectb[0] = 1.0;
-    vectb[1] = 2.0;
-    FLPT * vectx0 = dassign(2);
-    vectx0[1] = 1.0;
-    vectx0[0] = 2.0;
-    printvector("b", 2, vectb);
-    FLPT * vectx = dassign(2);
- //   conjgrad(ucdsa, vectb, vectx0, vectx, 2, 0, 0.1, NULL);
-    printf("Heeya\n");
-    dconjgrad(ucdsa, vectb, vectx0, vectx, &multiply_ucds, &dvectnorm, 0, 0.1, NULL);
-    printvector("x", 2, vectx);
-    FLPT * vectbnew = dassign(2);
-    vectbnew = multiply_ucds(ucdsa, vectx, vectbnew);
-  //  conjgrad(ucdsa, vectx, vectx0, vectbnew, 2, 0, 0.1, NULL);
-    
-    printvector("bnew", 2, vectbnew);
-    free(vectbnew);
-    free(vectb);
-    free(vectx);
-    free(vectx0);
-    destroy_ucds(ucdsa);    
-    
-    
-  //  testconjgrad();
     
 /* 
 // There are two arguments for the program. The first is the size of

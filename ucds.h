@@ -24,6 +24,7 @@
 */
 
 typedef int INTG;
+
 typedef double FLPT;
 
 /* We use a typedef for storing time lengths. */
@@ -80,6 +81,13 @@ FLPT * dassign(const INTG isize);
 */
 
 FLPT * dsetvector(const INTG isize, const FLPT dvalue);
+
+/*
+// The drandomvector does the same, except that the values are random
+// (between 0 and 1).
+*/
+
+FLPT * drandomvector(const INTG isize);
 
 /* 
 // The dveccopy copies a vector from one value to another. Arguments:
@@ -408,8 +416,6 @@ TLEN timespecDiff(struct timespec *ptime1, struct timespec *ptime2);
 */
 
 void printvector(const char* name, INTG isize, const FLPT* dvector);
-
-
 
 
 /*

@@ -1,38 +1,124 @@
 /* 
-// testucds.c. Runs tests on Ultra Compressed Diagonal Storage.
+// testucds.c. Runs tests on Ultra Compressed Diagonal Storage
+// for correctness, not time.
 // Written by Peter Murphy. (c) 2013
 */
 
 #include "ucds.h"
 
+/*
+// We do some "expected value" functions for vectors consisting
+// only of a particular value. 
+*/
+
+FLPT expectedvaluenorm(const INTG ivectsize, const INTG imode, 
+    const FLPT dvalue)
+{
+    if (imode == 1)
+    {
+        return dvalue * (FLPT) ivectsize;
+    }
+    else if (imode == 2)
+    {
+        return sqrt(pow(dvalue, 2) * (FLPT) ivectsize);
+    }
+    else /* Infinity Norm */
+    {
+        return dvalue;
+    }
+}
+
+/* 
+// We have an expected vector vector, where one expects all values to equal
+// a certain value.
+*/
+
+INTG bisallvalues(const INTG ivectsize, const FLPT dvalue, 
+    const FLPT * dvector)
+{
+    INTG i; /* An iterator. */
+    for (i = 0; i < ivectsize; i++)
+    {
+        if (dvector[i] != dvalue)
+        {
+            return 0; /* Fail. */
+        }
+    }
+    return 1; /* True */
+}
+
+/* 
+// This tests the conjugate gradient vector function by passing in an ucds, A,
+// and a vector b, and seeing that the conjugate gradient function returns x,
+// the solution of Ax = b.
+*/
+
+INTG btestconggrad(const INTG ivectsize, const ucds * ucdsa, 
+    const FLPT * dvectorb, const FLPT dminerror)
+{
+    FLPT * dvect0 = dsetvector(ivectsize, 0.0); /* Starting vector. */
+    FLPT * dconjresult = dassign(ivectsize); /* The result of conj. grad. */
+    FLPT * dmultresult = dassign(ivectsize); /* Multiply above with ucdsa. */
+    FLPT * ddifference = dassign(ivectsize); /* The difference between them. */
+    
+/* Possible multiplication and pointer functions. */    
+    
+    fpmult fpmultfuns[2] = {&multiply_ucds, &multiply_ucdsalt}; 
+    fpnorm fpnormfuns[2] = {&dvectnorm, &daltnorm};
+    INTG i, j, k; /* Iteration variables. */
+    INTG icount; /* A count of how many iterations. */
+    
+    for (i = 0; i < 3; i++) /* Over norm modes. */
+    {
+        for (j = 0; j < 2; j++) /* Over norm functions. */
+        {
+            for (k = 0; k < 2; k++) /* Over multiplication functions. */
+            {
+                printf("%d, %d, %d\n", i, j, k);
+       //         printvector("dvect0", ivectsize, dvect0);
+                dexpconjgrad(ucdsa, dvectorb, dvect0, dconjresult, fpmultfuns[k], 
+                    fpnormfuns[j], i, dminerror, &icount);
+                printf("The number of iterations is %d.\n", icount);
+    //FLPT * dvectx, const FLPT derror)
+ //               dconjgrad(ucdsa, dvectorb, dvect0, dconjresult,  fpmultfuns[k],
+//                    fpnormfuns[j], i, dminerror, &icount);
+                fpmultfuns[k](ucdsa, dconjresult, dmultresult);
+                dvectsub (ivectsize, dvectorb, dmultresult, ddifference);
+  //              printvector("dvect0", ivectsize, dvect0);
+   //             printvector("dconjresult", ivectsize, dconjresult);
+    //            printvector("dmultresult", ivectsize, dmultresult);
+      //          printvector("ddifference", ivectsize, ddifference);
+                if (fpnormfuns[j](ivectsize, i, ddifference) > dminerror)
+                {
+                  /*  free(dvect0);
+                    free(dconjresult);
+                    free(dmultresult);
+                    free(ddifference); */
+                    printf("Doesn't work!\n");                    
+                } 
+            }
+        }
+    }
+    free(dvect0);
+    free(dconjresult);
+    free(dmultresult);
+    free(ddifference);
+    return icount;
+}
+
 
 int main(int argc, char *argv[])
 {
+
+    srand (time(NULL));
+    FLPT * didentvector = dsetvector(800, 1.0); /* Has equal values. */
+    FLPT * drandvector = drandomvector(800); /* Random values. */
     INTG tldiagindices[3] = {-1, 0, 1};
-    FLPT tddiagvals[3] = {1.0, 4.0, 1.0};    
-    ucds * ucdsa = mmatrix_ucds(2, tldiagindices, tddiagvals, 3);
-    ucdsa->ddiagelems[3] = 3.0;
-    printvector("ucds", 6, ucdsa->ddiagelems);
-    FLPT * vectb = dassign(2);
-    vectb[0] = 1.0;
-    vectb[1] = 2.0;
-    FLPT * vectx0 = dassign(2);
-    vectx0[1] = 1.0;
-    vectx0[0] = 2.0;
-    printvector("b", 2, vectb);
-    FLPT * vectx = dassign(2);
- //   conjgrad(ucdsa, vectb, vectx0, vectx, 2, 0, 0.1, NULL);
-    dconjgrad(ucdsa, vectb, vectx0, vectx, &multiply_ucds, &dvectnorm, 0, 0.1, NULL);
-    printvector("x", 2, vectx);
-    FLPT * vectbnew = dassign(2);
-    vectbnew = multiply_ucds(ucdsa, vectx, vectbnew);
-  //  conjgrad(ucdsa, vectx, vectx0, vectbnew, 2, 0, 0.1, NULL);
-    
-    printvector("bnew", 2, vectbnew);
-    free(vectbnew);
-    free(vectb);
-    free(vectx);
-    free(vectx0);
+    FLPT tddiagvals[3] = {-1.0, 4.0, -1.0};    
+    ucds * ucdsa = mmatrix_ucds(800, tldiagindices, tddiagvals, 3);
+    printf("%d\n", btestconggrad(800, ucdsa, didentvector, 0.01));
+    free(drandvector);
+    free(didentvector);
     destroy_ucds(ucdsa);    
     
     

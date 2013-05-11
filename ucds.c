@@ -33,6 +33,21 @@ FLPT * dsetvector(const INTG isize, const FLPT dvalue)
     return dret;
 }
 
+FLPT * drandomvector(const INTG isize)
+{
+    FLPT * dret = dassign(isize); /* Return value. */
+    INTG i; /* Iteration variable. */
+    if (dret == NULL)
+    {
+        return NULL;
+    }
+    for (i = 0; i < isize; i++)
+    {
+        dret[i] = rand()%10;
+    }
+    return dret;
+}
+
 FLPT * dveccopy (const INTG lvectsize, FLPT * doverwrite, 
     const FLPT *dsource)
 {
@@ -528,12 +543,14 @@ FLPT * dconjgrad(const ucds * ucdsa, const FLPT * dvectb, const FLPT *dvectx0,
     FLPT * dpvect = dassign(ivectorsize); /* Stores p vector. */
     FLPT * dapproduct = dassign(ivectorsize); /* For product of A and p_k. */
     FLPT dalpha, dbeta; /* Alpha and beta. */
+    FLPT normval;
     
 /* Initialise the algorithm. */
 
     drvect[0] = dassign(ivectorsize);
     drvect[1] = dassign(ivectorsize);
     dapproduct = fpucdsmult(ucdsa, dvectx0, dapproduct);
+    printvector("dapproduct", ivectorsize, dapproduct);
     drvect[0] = dvectsub (ivectorsize, dvectb, dapproduct, drvect[0]);
     dveccopy(ivectorsize, dpvect, drvect[0]);
     dveccopy(ivectorsize, dvectx, dvectx0);
@@ -541,24 +558,36 @@ FLPT * dconjgrad(const ucds * ucdsa, const FLPT * dvectb, const FLPT *dvectx0,
     while (1)
     {
         dapproduct = fpucdsmult(ucdsa, dpvect, dapproduct);
+        printvector("dapproduct", ivectorsize, dapproduct);
         dalpha = drdotpd[icount % 2] / ddotprod(ivectorsize, dpvect, 
             dapproduct);
         daddinsitu(ivectorsize, dvectx, dalpha, dpvect);
+        printvector("dvectx", ivectorsize, dvectx);
         drvect[(icount + 1) % 2] = daddtwosums(ivectorsize, 
             drvect[(icount + 1) % 2], drvect[icount % 2], 1.0, 
             dapproduct, dalpha * (-1.0));
-        if (fpdnorm(ivectorsize, imode, drvect[(icount + 1) % 2]) < derror)
+        printvector("dvectr", ivectorsize, drvect[(icount + 1) % 2]);
+        printf("A, %d, %d, %f\n", ivectorsize, imode, derror); 
+        normval = fpdnorm(ivectorsize, imode, drvect[(icount + 1) % 2]);
+        printf("Aextra\n, %f\nbg", normval);        
+        if (normval < derror)
         {
+                    printf("B");
             break;
-        }        
+        }
+        printf("C");        
         drdotpd[(icount % 2) + 1] = dselfdprod(ivectorsize, 
             drvect[(icount % 2) + 1]);
+        printf("D");
         dbeta = dselfdprod(ivectorsize, drvect[(icount + 1) % 2])
              / dselfdprod(ivectorsize, drvect[icount % 2]);
+        printf("E");
         dpvect = daddtwosums(ivectorsize, dpvect, drvect[(icount + 1) % 2], 
             1.0, dpvect, dbeta); 
+        printvector("dpvect", ivectorsize, dpvect);
         icount = icount + 1;
     }
+    printf("F");
     if (iiter != NULL)
     {
         *iiter = icount;
@@ -570,5 +599,89 @@ FLPT * dconjgrad(const ucds * ucdsa, const FLPT * dvectb, const FLPT *dvectx0,
     return dvectx;
 }
 
+/*
+// The following implementation is from 5.1, p.42 of Henk A. van der Vorst,
+// "Iterative Krylov Methods for Large Linear Systems".
+*/
 
+
+FLPT * dexpconjgrad(const ucds * ucdsa, const FLPT * dvectb, const FLPT *dvectx0,
+    FLPT * dvectx, fpmult fpucdsmult, fpnorm fpdnorm, 
+    INTG imode, const FLPT derror, INTG * inoiter)
+{
+    FLPT alpha, beta; /* Variables used in the equation. */
+    INTG icount = 1; /* The iteration count. */
+    INTG ivectorsize = ucdsa->lmatsize; /* The size of matrices and vectors. */
+    FLPT * dpvector;
+    FLPT * dqvector;
+    FLPT * dbetapproduct;
+    FLPT * drvectors[2]; /* Needed for r_even and r_odd storage. */
+    FLPT * dnormvector;
+    FLPT rhos[2]; /* Needed for the rhos. */
+    FLPT dnorm;
+    
+/* Time to initialise. */
+
+    dpvector = dassign(ivectorsize);
+    dqvector = dassign(ivectorsize);
+    dbetapproduct = dassign(ivectorsize);
+    drvectors[0] = dassign(ivectorsize);
+    drvectors[1] = dassign(ivectorsize);
+    dnormvector = dassign(ivectorsize);
+    
+    INTG i; /* An iteration variable. */
+    #pragma omp parallel for
+    for (i = 0; i < ivectorsize; i++)
+    {
+        dvectx[i] = 0.0;
+    }    
+    fpucdsmult(ucdsa, dvectx0, dqvector);
+    dvectsub (ivectorsize, dvectb, dqvector, drvectors[0]);
+    while(1)
+    {
+        rhos[(icount - 1) % 2] = dselfdprod(ivectorsize, drvectors[(icount - 1) % 2]);
+        if (icount == 1)
+        {
+            dveccopy(ivectorsize, dpvector, drvectors[(icount - 1) % 2]);
+        }
+        else
+        {
+            beta = rhos[(icount - 1) % 2]/rhos[icount % 2];
+            dscalarprod (ivectorsize, beta, dpvector, dbetapproduct);
+            dvectadd (ivectorsize, drvectors[(icount - 1) % 2], dbetapproduct, dpvector);
+            dveccopy(ivectorsize, dpvector, drvectors[(icount - 1) % 2]);
+        }
+        fpucdsmult(ucdsa, dpvector, dqvector);
+        alpha = rhos[(icount - 1) % 2]/ddotprod(ivectorsize, dpvector, dqvector); 
+        daddinsitu (ivectorsize, dvectx, alpha, dpvector);
+        daddtwosums (ivectorsize, drvectors[icount % 2], drvectors[(icount - 1) % 2],
+            1.0, dqvector, -1.0 * alpha);
+ //       printvector("drvect", ivectorsize, drvectors[icount % 2]);
+    //            printvector("dxvect", ivectorsize, dvectx);
+        dscalarprod (ivectorsize, alpha, dqvector, dnormvector);
+        dnorm = dvectnorm (ivectorsize, imode, dnormvector);
+        
+        if (dnorm < derror)
+        {
+            free(dpvector);
+            free(dqvector);
+            free(dbetapproduct);
+            free(drvectors[0]);
+            free(drvectors[1]);
+            free(dnormvector);
+            if (inoiter != NULL)
+            {
+                *inoiter = icount;
+            }
+            return dvectx;
+        }
+        icount = icount + 1;
+    }
+}
+        
+    
+    
+    
+
+    
 
