@@ -47,7 +47,7 @@ typedef uint64_t TLEN;
 
 /* Useful for counting number of test cases. */
 
-#define NUMTESTS 10
+#define NUMTESTS 12
 
 /* Defines minimum matrix size for test 3 with 5 diagonals. */
 
@@ -88,6 +88,18 @@ FLPT * dsetvector(const INTG isize, const FLPT dvalue);
 */
 
 FLPT * drandomvector(const INTG isize);
+
+/*
+// The doverwrite function acts like the dsetvector function: it sets
+// the values of a vector (dret) to a value (dvalue). However, dret
+// must be already initialised.
+*/
+
+FLPT * doverwritevector(const INTG isize, const FLPT dvalue, FLPT* dret);
+
+/* The doverwriterandom tries it with random vectors. */
+
+FLPT * doverwriterandom(const INTG isize, FLPT* dret);
 
 /* 
 // The dveccopy copies a vector from one value to another. Arguments:
@@ -341,8 +353,9 @@ FLPT * multiply_ucdsalt(const ucds *ourucds, const FLPT *dvector, FLPT * dret);
 
 /* 
 // The multiply_ucds27 routine is like the multiply_ucds routine; the only
-// difference is that the number of diagonals is hardwired at 27. This is
-// only used to check how performance is optimised under these conditions.
+// difference is that the number of diagonals is hardwired at 27 by const
+// statements. This is only used to check how performance is optimised 
+// under these conditions.
 // 
 // The multiply_ucds5 is similar, except that the number of diagonals is
 // hardwired at 5.
@@ -355,13 +368,23 @@ FLPT * multiply_ucds5(const ucds *ourucds, const FLPT *dvector, FLPT * dret);
 
 /* 
 // The multiply_ucdsaltX (X an integer) are like the multiply_ucdsX functions:
-// hardwire the number of diagonals at X to check the performance. The only
+// hardwire the number of diagonals at X to check the performance as consts. The only
 // difference is that these use inner loop parallelisation. The arguments
 // are otherwise the same.
 */
 
 FLPT * multiply_ucdsalt27(const ucds *ourucds, const FLPT *dvector, FLPT * dret);
 FLPT * multiply_ucdsalt5(const ucds *ourucds, const FLPT *dvector, FLPT * dret);
+
+/* 
+// These four functions use #defines rather than consts, but are otherwise the
+// same.
+*/
+
+FLPT * multiply_ucdsd27(const ucds *ourucds, const FLPT *dvector, FLPT * dret);
+FLPT * multiply_ucdsd5(const ucds *ourucds, const FLPT *dvector, FLPT * dret);
+FLPT * multiply_ucdsaltd27(const ucds *ourucds, const FLPT *dvector, FLPT * dret);
+FLPT * multiply_ucdsaltd5(const ucds *ourucds, const FLPT *dvector, FLPT * dret);
 
 /* This code is for testing. */
 
@@ -396,9 +419,22 @@ typedef struct {
     FLPT * dret;
     fpmult thefp;
     TLEN testlen;
+    INTG inoreps;
 } mmtestbed;
 
+/*
+// The mmtestsetup does the hard work of setting up a mmtestbed item.
+// The only parameters are the lnumdiag parameter (for the number of
+// diagonals), the mmref item (which references the mmtestbed
+// instance itself), and ivectsize (the size of vectors for the test).
+*/
 
+mmtestbed * mmsetup(INTG lnumdiag, INTG ivectsize, mmtestbed * mmref);
+
+/* The mmsetdown element destroys the information in a mmsetup instance. */
+
+void mmdestroy(mmtestbed * mmref);
+    
 /*
 // The timespecDiff routine gives the differences in nanoseconds between
 // two events ptime1 (the end) and ptime2 (the start).
@@ -430,7 +466,7 @@ void printvector(const char* name, INTG isize, const FLPT* dvector);
 // fpdnorm: a reference to a norm returning function (of type fpnorm).
 // imode: the mode of the norm used to measure the "error".
 // derror: the maximum error in a possible solution.
-// iiter: if this parameter is not NULL, the function sets it to the number of
+// inoiter: if this parameter is not NULL, the function sets it to the number of
 // iterations necessary to arrive at a solution. (This parameter is ignored
 // if it is NULL
 //
@@ -439,7 +475,7 @@ void printvector(const char* name, INTG isize, const FLPT* dvector);
 */
 
 FLPT * dconjgrad(const ucds * ucdsa, const FLPT * dvectb, const FLPT *dvectx0,
-    FLPT * dvectx, fpmult fpucdsmult, fpnorm fpdnorm, const INTG imode, 
-    const FLPT derror, INTG * iiter);
+    FLPT * dvectx, fpmult fpucdsmult, fpnorm fpdnorm, 
+    INTG imode, const FLPT derror, INTG * inoiter);
 
 #endif /* UCDS_H */    

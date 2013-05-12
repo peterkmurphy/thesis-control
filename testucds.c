@@ -47,6 +47,55 @@ INTG bisallvalues(const INTG ivectsize, const FLPT dvalue,
     return 1; /* True */
 }
 
+/*
+// This tests the multiplication functions to see if they are equal to 
+// each other.
+*/
+
+INTG btestmult(const INTG ivectsize, const ucds * ucdsa, const INTG inoreps)
+{
+    FLPT * dmultresult = dassign(ivectsize); /* Multiply above with ucdsa. */
+    FLPT * daltmultresult = dassign(ivectsize); /* The alt result. */ 
+    FLPT * ddifference = dassign(ivectsize); /* The difference between them. */
+    FLPT * dvectorb = dassign(ivectsize);
+    
+/* Possible multiplication and pointer functions. */    
+    
+    fpmult fpmultfuns[2] = {&multiply_ucds, &multiply_ucdsalt}; 
+    INTG i; /* Iteration variables. */
+    INTG ifailurecount; /* This stores how many failures. */
+    
+    for (i = 0; i < inoreps; i++) /* Over norm modes. */
+    {
+        doverwriterandom(ivectsize, dvectorb);
+        multiply_ucdsexpanded(ucdsa, dvectorb, dmultresult);
+        multiply_ucdsalt(ucdsa, dvectorb, daltmultresult);
+        dvectsub (ivectsize, dmultresult, daltmultresult, ddifference);
+        printvector("dvectorb", ivectsize, dvectorb);
+        printvector("dmultresult", ivectsize, dmultresult);
+        printvector("daltmultresult", ivectsize, daltmultresult);
+        printvector("ddifference", ivectsize, ddifference);
+        if (dvectnorm(ivectsize, i, ddifference) > 0.1)
+        {
+            ifailurecount++;
+
+        }        
+    }
+    free(dvectorb);
+    free(daltmultresult);
+    free(dmultresult);
+    free(ddifference);
+    return ifailurecount;
+}
+
+/* This calculates the number of diagonals in a matrix of size imatsize. */
+
+
+INTG iminmatsize(INTG imatsize)
+{
+    return (imatsize / 2) + 1;
+}
+
 /* 
 // This tests the conjugate gradient vector function by passing in an ucds, A,
 // and a vector b, and seeing that the conjugate gradient function returns x,
@@ -54,48 +103,55 @@ INTG bisallvalues(const INTG ivectsize, const FLPT dvalue,
 */
 
 INTG btestconggrad(const INTG ivectsize, const ucds * ucdsa, 
-    const FLPT * dvectorb, const FLPT dminerror)
+    const FLPT dminerror, const INTG inoreps)
 {
     FLPT * dvect0 = dsetvector(ivectsize, 0.0); /* Starting vector. */
     FLPT * dconjresult = dassign(ivectsize); /* The result of conj. grad. */
     FLPT * dmultresult = dassign(ivectsize); /* Multiply above with ucdsa. */
     FLPT * ddifference = dassign(ivectsize); /* The difference between them. */
+    FLPT * dvectorb = dassign(ivectsize);
     
 /* Possible multiplication and pointer functions. */    
     
     fpmult fpmultfuns[2] = {&multiply_ucds, &multiply_ucdsalt}; 
     fpnorm fpnormfuns[2] = {&dvectnorm, &daltnorm};
-    INTG i, j, k; /* Iteration variables. */
+    INTG i, j, k, l; /* Iteration variables. */
     INTG icount; /* A count of how many iterations. */
+    INTG ifailurecount; /* This stores how many failures. */
+    INTG istore;
+    INTG itotalfailures = 0;
     
     for (i = 0; i < 3; i++) /* Over norm modes. */
     {
         for (j = 0; j < 2; j++) /* Over norm functions. */
         {
+            doverwriterandom(ivectsize, dvectorb);
             for (k = 0; k < 2; k++) /* Over multiplication functions. */
             {
-                printf("%d, %d, %d\n", i, j, k);
-       //         printvector("dvect0", ivectsize, dvect0);
-                dexpconjgrad(ucdsa, dvectorb, dvect0, dconjresult, fpmultfuns[k], 
-                    fpnormfuns[j], i, dminerror, &icount);
-                printf("The number of iterations is %d.\n", icount);
-    //FLPT * dvectx, const FLPT derror)
- //               dconjgrad(ucdsa, dvectorb, dvect0, dconjresult,  fpmultfuns[k],
-//                    fpnormfuns[j], i, dminerror, &icount);
-                fpmultfuns[k](ucdsa, dconjresult, dmultresult);
-                dvectsub (ivectsize, dvectorb, dmultresult, ddifference);
-  //              printvector("dvect0", ivectsize, dvect0);
-   //             printvector("dconjresult", ivectsize, dconjresult);
-    //            printvector("dmultresult", ivectsize, dmultresult);
-      //          printvector("ddifference", ivectsize, ddifference);
-                if (fpnormfuns[j](ivectsize, i, ddifference) > dminerror)
+                printvector("dvectorb", ivectsize, dvectorb);
+                icount = 0;
+                ifailurecount = 0;
+                printf("Mode %d-%d-%d: ", i, j, k);
+                for (l = 0; l < inoreps; l++)
                 {
-                  /*  free(dvect0);
-                    free(dconjresult);
-                    free(dmultresult);
-                    free(ddifference); */
-                    printf("Doesn't work!\n");                    
-                } 
+                    dconjgrad(ucdsa, dvectorb, dvect0, dconjresult,
+                        fpmultfuns[k], fpnormfuns[j], i, 
+                        dminerror, &istore);
+                    printvector("dconjresult", ivectsize, dconjresult);
+                    if (istore > icount)
+                    {   
+                        icount = istore;
+                    }
+                    fpmultfuns[k](ucdsa, dconjresult, dmultresult);
+                    dvectsub (ivectsize, dvectorb, dmultresult, ddifference);
+                    if (fpnormfuns[j](ivectsize, i, ddifference) > dminerror)
+                    {
+                        ifailurecount++;                    
+                    }
+                }
+                printf("reps: %d, maxcount: %d; failures: %d\n", 
+                    inoreps, icount, ifailurecount);
+                itotalfailures += ifailurecount;
             }
         }
     }
@@ -103,26 +159,13 @@ INTG btestconggrad(const INTG ivectsize, const ucds * ucdsa,
     free(dconjresult);
     free(dmultresult);
     free(ddifference);
-    return icount;
+    free(dvectorb);
+    return itotalfailures;
 }
 
 
 int main(int argc, char *argv[])
 {
-
-    srand (time(NULL));
-    FLPT * didentvector = dsetvector(800, 1.0); /* Has equal values. */
-    FLPT * drandvector = drandomvector(800); /* Random values. */
-    INTG tldiagindices[3] = {-1, 0, 1};
-    FLPT tddiagvals[3] = {-1.0, 4.0, -1.0};    
-    ucds * ucdsa = mmatrix_ucds(800, tldiagindices, tddiagvals, 3);
-    printf("%d\n", btestconggrad(800, ucdsa, didentvector, 0.01));
-    free(drandvector);
-    free(didentvector);
-    destroy_ucds(ucdsa);    
-    
-    
-  //  testconjgrad();
     
 /* 
 // There are two arguments for the program. The first is the size of
@@ -132,7 +175,7 @@ int main(int argc, char *argv[])
 // code does validation on this.
 */    
 
-    const INTG iminmatsize = MINDIAGT27;
+    const INTG iminmatsize = 2;
     
     if (argc < 3)
     {
@@ -156,323 +199,148 @@ int main(int argc, char *argv[])
         return(0);
     }    
 
-/* 
-// Some useful variables:
-// - i, j: general purpose iteration variables.
-// - start, end: contains start and end times.
-// - dvector: a test vector; consists solely of 1.0s.
-*/
+/* These are variables for taking the outputs of functions. */
+
+    FLPT ddummy; /* For output values. */
+    FLPT dexpect; /* For expected values. */
+    FLPT * didentvector = dsetvector(imatsize, 1.0); /* Has equal values. */
+    FLPT * dvectout = dsetvector(imatsize, 0.0);
+
     
-    INTG i, j;
-    struct timespec start, end;
-    FLPT * dvector = dsetvector(imatsize, 1.0);
-    if (dvector == NULL)
+    INTG i,j; /* An iteration variable. */
+    
+/* Here are the tests. */    
+  
+    ddummy = ddotprod (imatsize, didentvector, didentvector);
+    if (ddummy != (imatsize * 1.0))
     {
-        printf("The function is unable to allocate a simple vector.\n"); 
-        return (0);
+        printf("Dot product's broken!\n");
+    }
+    dscalarprod (imatsize, 2.0, didentvector, dvectout);
+    dvectadd(imatsize, didentvector, didentvector, dvectout);
+    dvectsub(imatsize, didentvector, didentvector, dvectout);
+    for (i = 0; i < 3; i++)
+    {
+        ddummy = dvectnorm(imatsize, i, didentvector);
+        dexpect = expectedvaluenorm(imatsize, i, 1.0);
+        if ((ddummy - dexpect) > 0.01)
+        {
+            printf("Norm: %d, ddummy: %f; expected: %f\n", i, ddummy, dexpect);
+        }
+        ddummy = daltnorm(imatsize, i, didentvector);
+        dexpect = expectedvaluenorm(imatsize, i, 1.0);
+        if ((ddummy - dexpect) > 0.01)
+        {
+            printf("Alt Norm: %d, ddummy: %f; expected: %f\n", i, ddummy, dexpect);
+        }
     }
 
-    
-/* Now we initialise the test data.*/
-    
-    const INTG inotests = NUMTESTS;
 
-/* Code for 3 diagonal UCDS. */
-    
-    const INTG inumsimpdiag = SMALLDIAG;
-    INTG lsimpelems[SMALLDIAG] = {-1, 0, 1};
-    
-/* For simple identity matrices. */    
-    
-    FLPT delems_id[SMALLDIAG] = {0.0, 1.0, 0.0};  
-    
-/* For simple PDEs. */    
-    
-    FLPT delems_pde[SMALLDIAG] = {-1.0, 4.0, -1.0};     
-    
-/* Code for 5 diagonal UCDS. */
+/* Now this is an attempt to set up a test environment. */
 
-    const INTG inummiddiag = MIDDIAG;
-    INTG lmidelems[MIDDIAG] = {-3, -1, 0, 1, 3};
-    FLPT dmidel_vals[MIDDIAG] = {-1.0, -1.0, 4.0, -1.0, -1.0};    
-
-/* Code for 27 diagonal UCDS. */
+    FLPT *dzerovector = dsetvector(imatsize, 0.0); 
+    FLPT * dmultvector = dsetvector(imatsize, 1.0);
+    FLPT * ddifvector = dassign(imatsize);
+    FLPT dnorm;
+    const INTG inotests = 10;
+    INTG icount;    
     
-    const INTG inumlargdiag = LARGEDIAG;
-    INTG llargelems[LARGEDIAG];
-    FLPT dlargel_vals[LARGEDIAG];
-    i = createspdd(inumlargdiag, llargelems, dlargel_vals);
-
-    
+   
 /* 
 // Code for other UCDSs with different numbers of diagonals. 
 // The numbers are chosen (9, 15, 45, 81) because they are
 // useful to see how UCDS performs for larger problems, rather
 // than how they do with EPDEs.
 */
-
-    const INTG inum9 = 9;
-    INTG l9elems[inum9];
-    FLPT d9vals[inum9];
-    i = createspdd(inum9, l9elems, d9vals);    
-    const INTG inum15 = 15;
-    INTG l15elems[inum15];
-    FLPT d15vals[inum15];
-    i = createspdd(inum15, l15elems, d15vals);    
-    const INTG inum45 = 45;
-    INTG l45elems[inum45];
-    FLPT d45vals[inum45];
-    i = createspdd(inum45, l45elems, d45vals);    
-    const INTG inum81 = 81;
-    INTG l81elems[inum81];
-    FLPT d81vals[inum81];
-    i = createspdd(inum81, l81elems, d81vals);    
-    
+   
     
 /* The test bed itself. */    
     
     mmtestbed ourtestbed[inotests];
+    INTG iminisize = imatsize * 2 + 2;
+    INTG imaxiter;
+    INTG immindices[10] = {5, 5, 5, 9, 15, 27, 27, 27, 45, 81};
     for (i = 0; i < inotests; i++)
     {
-        ourtestbed[i].dret = dassign(imatsize);
-        if (i == 7)
+        printf("Diag: %d\n", immindices[i]);
+        if (immindices[i] < iminisize)
         {
-            ourtestbed[i].thefp = &multiply_ucdsalt27;
+            mmsetup(immindices[i], imatsize, &(ourtestbed[i]));
+            if (i == 6)
+            {
+                ourtestbed[i].thefp = &multiply_ucdsalt27;
+            }
+            else if (i == 7)
+            {
+                ourtestbed[i].thefp = &multiply_ucdsaltd27;
+            }            
+            else if (i == 1)
+            {
+                ourtestbed[i].thefp = &multiply_ucdsalt5;
+            }
+            else if (i == 2)
+            {
+                ourtestbed[i].thefp = &multiply_ucdsaltd5;
+            }
+            else
+            { 
+                ourtestbed[i].thefp = &multiply_ucdsalt;
+            }
         }
-        else if (i == 3)
-        {
-            ourtestbed[i].thefp = &multiply_ucdsalt5;
-        }
-        else
-        {
-            ourtestbed[i].thefp = &multiply_ucdsalt;
-        }
-
-/* 
-// Then we set the related objects - the number of diagonals, their indices
-// and their values.
-*/        
-
-        switch(i)
-        {
-            case 0: /* Identity matrix */
-            case 1: /* -1, 4, 1 stencil */
-                ourtestbed[i].lnumdiag = inumsimpdiag;
-                ourtestbed[i].ldiagindices = lsimpelems;
-                if (i == 0)
-                {
-                    ourtestbed[i].ddiagelems = delems_id;
-                }
-                else
-                {
-                    ourtestbed[i].ddiagelems = delems_pde;
-                }
-                break;
-            case 2: /* -1, -1, 4, 1, 1, stencil */
-            case 3: /* Ditto with multiply_ucds5 function. */
-                ourtestbed[i].lnumdiag = inummiddiag;
-                ourtestbed[i].ldiagindices = lmidelems;
-                ourtestbed[i].ddiagelems = dmidel_vals;
-                break;
-            case 4: /* 9 diagonal matrix. */
-                ourtestbed[i].lnumdiag = inum9;
-                ourtestbed[i].ldiagindices = l9elems;
-                ourtestbed[i].ddiagelems = d9vals;
-                break;
-            case 5: /* 15 diagonal matrix. */
-                ourtestbed[i].lnumdiag = inum15;
-                ourtestbed[i].ldiagindices = l15elems;
-                ourtestbed[i].ddiagelems = d15vals;
-                break;                
-            case 6: /* 27 diagonal matrix. */
-            case 7: /* Ditto with multiply_ucds27 */
-                ourtestbed[i].lnumdiag = inumlargdiag;
-                ourtestbed[i].ldiagindices = llargelems;
-                ourtestbed[i].ddiagelems = dlargel_vals;
-                break;
-            case 8: /* 45 diagonal matrix. */
-                ourtestbed[i].lnumdiag = inum45;
-                ourtestbed[i].ldiagindices = l45elems;
-                ourtestbed[i].ddiagelems = d45vals;
-                break;                 
-            default: /* 81 diagonal matrix. */    
-                ourtestbed[i].lnumdiag = inum81;
-                ourtestbed[i].ldiagindices = l81elems;
-                ourtestbed[i].ddiagelems = d81vals;
-                break;             
-        }
-
-/* Then we initialise the UCDS object. */
-        
-        ourtestbed[i].ourucds = mmatrix_ucds(imatsize, 
-            ourtestbed[i].ldiagindices, ourtestbed[i].ddiagelems, 
-            ourtestbed[i].lnumdiag);
-    }
-
+    }        
+    
+    
 /* Now we run the tests. */
     
     for (i = 0; i < inotests; i++)
-    {
-        clock_gettime(CLOCK_MONOTONIC, &start); 
-        for (j = 0; j < inoreps; j++)
+    { 
+        printf ("%d\n", i);
+        if (immindices[i] < iminisize)
         {
-            ourtestbed[i].dret = (* ourtestbed[i].thefp)(ourtestbed[i].ourucds,
-            dvector, ourtestbed[i].dret);
+            printf ("%d\n", i);
+            for (j = 0; j < inoreps; j++)
+            {
+                dconjgrad(ourtestbed[i].ourucds,
+                    didentvector, dzerovector, ourtestbed[i].dret,
+                    ourtestbed[i].thefp, dvectnorm, 2, 0.1, &icount); /* &istore */
+                ourtestbed[i].inoreps += icount;
+                ourtestbed[i].thefp(ourtestbed[i].ourucds, ourtestbed[i].dret, dmultvector);
+                dvectsub (imatsize, didentvector, dmultvector, ddifvector);
+                if (dvectnorm(imatsize, 2, ddifvector) > 0.1)
+                {
+                    printf("We have a problem!\n");                    
+                }
+            }    
         } 
-        clock_gettime(CLOCK_MONOTONIC, &end);
-        ourtestbed[i].testlen = timespecDiff(&end, &start);
     }
  
+
+    printf("Made it!\n");
     
-/* 
-// What we now do is time the subsidiary operations created for
-// the conjugate gradient operation.
-*/
-    
-    FLPT tdotprod;
-    FLPT tscalprod;
-    FLPT tvectadd;
-    FLPT tvectsub;
-    FLPT tnorm1;
-    FLPT tnorm2;
-    FLPT tnorminf;
-    FLPT taltnorm1;
-    FLPT taltnorm2;
-    FLPT taltnorminf;
-
-/* These are dummy variables for taking the outputs of functions. */
-
-    FLPT ddummy;
-    FLPT * dvectout = dsetvector(imatsize, 0.0);
-    
-/* Here are the tests. */    
-    
-    clock_gettime(CLOCK_MONOTONIC, &start); 
-    for (j = 0; j < inoreps; j++)
-    {
-        ddummy = ddotprod (imatsize, dvector, dvector);
-    } 
-    clock_gettime(CLOCK_MONOTONIC, &end);
-    printf ("%f: ", ddummy);
-    tdotprod = (1.0 * TLPERS * inoreps * imatsize) /
-        (MEGAHERTZ * timespecDiff(&end, &start)); 
-
-    
-    clock_gettime(CLOCK_MONOTONIC, &start); 
-    for (j = 0; j < inoreps; j++)
-    {
-        dvectout = dscalarprod (imatsize, 2.0, dvector, dvectout);
-    } 
-    clock_gettime(CLOCK_MONOTONIC, &end);
-    tscalprod = (1.0 * TLPERS * inoreps * imatsize) /
-        (MEGAHERTZ * timespecDiff(&end, &start));     
-    
-
-    clock_gettime(CLOCK_MONOTONIC, &start); 
-    for (j = 0; j < inoreps; j++)
-    {
-        dvectout = dvectadd(imatsize, dvector, dvector, dvectout);
-    } 
-    clock_gettime(CLOCK_MONOTONIC, &end);
-    tvectadd = (1.0 * TLPERS * inoreps * imatsize) /
-        (MEGAHERTZ * timespecDiff(&end, &start));    
-    
-
-    clock_gettime(CLOCK_MONOTONIC, &start); 
-    for (j = 0; j < inoreps; j++)
-    {
-        dvectout = dvectsub(imatsize, dvector, dvector, dvectout);
-    } 
-    clock_gettime(CLOCK_MONOTONIC, &end);
-    tvectsub = (1.0 * TLPERS * inoreps * imatsize) /
-        (MEGAHERTZ * timespecDiff(&end, &start));  
-
-    clock_gettime(CLOCK_MONOTONIC, &start); 
-    for (j = 0; j < inoreps; j++)
-    {
-        ddummy = dvectnorm(imatsize, 1, dvector);
-    } 
-    clock_gettime(CLOCK_MONOTONIC, &end);
-    printf ("%f: ", ddummy);
-    tnorm1 = (1.0 * TLPERS * inoreps * imatsize) /
-        (MEGAHERTZ * timespecDiff(&end, &start));     
-    
-    clock_gettime(CLOCK_MONOTONIC, &start); 
-    for (j = 0; j < inoreps; j++)
-    {
-        ddummy = dvectnorm(imatsize, 2, dvector);
-    } 
-    clock_gettime(CLOCK_MONOTONIC, &end);
-    printf ("%f: ", ddummy);
-    tnorm2 = (1.0 * TLPERS * inoreps * imatsize) /
-        (MEGAHERTZ * timespecDiff(&end, &start));  
-
-    clock_gettime(CLOCK_MONOTONIC, &start); 
-    for (j = 0; j < inoreps; j++)
-    {
-        ddummy = dvectnorm(imatsize, 3, dvector);
-    } 
-    clock_gettime(CLOCK_MONOTONIC, &end);
-    printf ("%f: ", ddummy);
-    tnorminf = (1.0 * TLPERS * inoreps * imatsize) /
-        (MEGAHERTZ * timespecDiff(&end, &start));
+    srand (time(NULL));
+    INTG tldiagindices[5] = {-3, -1, 0, 1, 3};
+    FLPT tddiagvals[5] = {-1.0, -1.0, 4.0, -1.0, -1.0};    
+    ucds * ucdsa = mmatrix_ucds(imatsize, tldiagindices, tddiagvals, 3);
+   // printf("%d\n", btestmult(imatsize, ucdsa, inoreps));
+ //   printf("%d\n", btestconggrad(imatsize, ucdsa, 0.01, inoreps));
 
 
-    clock_gettime(CLOCK_MONOTONIC, &start); 
-    for (j = 0; j < inoreps; j++)
-    {
-        ddummy = daltnorm(imatsize, 1, dvector);
-    } 
-    clock_gettime(CLOCK_MONOTONIC, &end);
-    printf ("%f: ", ddummy);
-    taltnorm1 = (1.0 * TLPERS * inoreps * imatsize) /
-        (MEGAHERTZ * timespecDiff(&end, &start));     
-    
-    clock_gettime(CLOCK_MONOTONIC, &start); 
-    for (j = 0; j < inoreps; j++)
-    {
-        ddummy = daltnorm(imatsize, 2, dvector);
-    } 
-    clock_gettime(CLOCK_MONOTONIC, &end);
-    printf ("%f: ", ddummy);
-    taltnorm2 = (1.0 * TLPERS * inoreps * imatsize) /
-        (MEGAHERTZ * timespecDiff(&end, &start));  
-
-    clock_gettime(CLOCK_MONOTONIC, &start); 
-    for (j = 0; j < inoreps; j++)
-    {
-        ddummy = daltnorm(imatsize, 3, dvector);
-    } 
-    clock_gettime(CLOCK_MONOTONIC, &end);
-    printf ("%f: ", ddummy);
-    taltnorminf = (1.0 * TLPERS * inoreps * imatsize) /
-        (MEGAHERTZ * timespecDiff(&end, &start));
-
-
-
-    
-
-/* Then we print the tests. */    
-
-    printf("%f, %f, %f, %f, %f, %f, %f, %f, %f, %f; ", tdotprod, tscalprod, tvectadd,
-        tvectsub, tnorm1, tnorm2, tnorminf, taltnorm1, taltnorm2, taltnorminf);
-    
-    
-    for (i = 0; i < inotests; i++)
-    {
-        printf("%f - ", (FLPT)((1.0 * TLPERS * imatsize * inoreps * 
-            ourtestbed[i].lnumdiag)/(1000000.0 * ourtestbed[i].testlen)));
-    }
-    printf("%d\n", imatsize);
-    
 /* The last state is to free up all the memory used. */
-    
-    free(dvector);
-    free(dvectout);    
+
+    destroy_ucds(ucdsa); 
+    free(didentvector);
+    free(dvectout);
     for (i = 0; i < inotests; i++)
     {
-        free(ourtestbed[i].dret);
-        destroy_ucds(ourtestbed[i].ourucds);
-    }
+        if (immindices[i] < iminisize)
+        {
+            mmdestroy(&(ourtestbed[i]));
+        }
+    }        
+
+    free(dzerovector); 
+    free(dmultvector);
+    free(ddifvector);
+    printf("Made it!\n");
     return 0;
 }

@@ -26,12 +26,36 @@ FLPT * dsetvector(const INTG isize, const FLPT dvalue)
     {
         return NULL;
     }
+    #pragma omp parallel for
     for (i = 0; i < isize; i++)
     {
         dret[i] = dvalue;
     }
     return dret;
 }
+
+FLPT * doverwritevector(const INTG isize, const FLPT dvalue, FLPT* dret)
+{
+    INTG i; /* Iteration variable. */
+    #pragma omp parallel for
+    for (i = 0; i < isize; i++)
+    {
+        dret[i] = dvalue;
+    }
+    return dret;
+}
+
+FLPT * doverwriterandom(const INTG isize, FLPT* dret)
+{
+    INTG i; /* Iteration variable. */
+    #pragma omp parallel for
+    for (i = 0; i < isize; i++)
+    {
+        dret[i] = rand()%10;
+    }
+    return dret;
+}
+
 
 FLPT * drandomvector(const INTG isize)
 {
@@ -41,6 +65,7 @@ FLPT * drandomvector(const INTG isize)
     {
         return NULL;
     }
+    #pragma omp parallel for
     for (i = 0; i < isize; i++)
     {
         dret[i] = rand()%10;
@@ -297,6 +322,26 @@ INTG createspdd(INTG inodiags, INTG * ldiagelems, FLPT * ddiagvals)
     return 1; /* Success! */
 }
 
+mmtestbed * mmsetup(INTG lnumdiag, INTG ivectsize, mmtestbed * mmref)
+{
+    mmref->ldiagindices = (INTG *) malloc (lnumdiag * sizeof(INTG));
+    mmref->ddiagelems = dassign(lnumdiag);
+    createspdd(lnumdiag, mmref->ldiagindices, mmref->ddiagelems);
+    mmref->dret = dassign(ivectsize);
+    mmref->ourucds = mmatrix_ucds(ivectsize, mmref->ldiagindices,
+        mmref->ddiagelems, lnumdiag);
+    mmref->inoreps = 0;
+    return mmref;
+}
+
+void mmdestroy(mmtestbed * mmref)
+{
+    free(mmref->dret);
+    free(mmref->ddiagelems);
+    free(mmref->ldiagindices);
+    destroy_ucds(mmref->ourucds);
+}
+
 void destroy_ucds(ucds * ourucds)
 {
     free(ourucds->ddiagelems); 
@@ -326,7 +371,7 @@ FLPT * multiply_ucds(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
         miniter = max(0, lrevindex);
         maxiter = min(ourucds->lmatsize - 1, ourucds->lmatsize - 1 
             + lrevindex);
-        //#pragma omp parallel for
+//        #pragma omp parallel for
         for (j = miniter; j <= maxiter; j++)
         {
             dret[j - lrevindex] += ourucds->ddiagelems[i*ourucds->lmatsize 
@@ -335,6 +380,43 @@ FLPT * multiply_ucds(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
     }
     return dret; 
 }
+
+FLPT * multiply_ucdsexpanded(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
+{
+    if ((ourucds == NULL) || (dvector == NULL) || (dret == NULL))
+    {
+        return NULL;
+    }
+    
+    INTG i, j; /* Iteration variables */
+ //   INTG lrevindex; /* Current diagonal index to evaluate. */
+ //   INTG miniter, maxiter; /* Sets range to iterate over in value lookup. */
+    
+    for (i = 0; i < ourucds->lmatsize; i++)
+    {
+        dret[i] = 0.0;
+    }
+    #pragma omp parallel
+    {
+    #pragma omp for private(j)
+    for (i = 0; i < ourucds->lnumdiag; i++)
+    {
+ //       lrevindex = ourucds->ldiagindices[i];
+  //      miniter = max(0, ourucds->ldiagindices[i]);
+ //       maxiter = min(ourucds->lmatsize - 1, ourucds->lmatsize - 1 
+    //        + ourucds->ldiagindices[i]);
+    //    #pragma omp parallel for
+        for (j = max(0, ourucds->ldiagindices[i]); j <= min(ourucds->lmatsize - 1, ourucds->lmatsize - 1 
+            + ourucds->ldiagindices[i]); j++)
+        {
+            dret[j - ourucds->ldiagindices[i]] = dret[j - ourucds->ldiagindices[i]] + ourucds->ddiagelems[i*ourucds->lmatsize 
+                + j] * dvector[j];
+        }
+    }
+    }
+    return dret; 
+}
+
 
 FLPT * multiply_ucdsalt(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
 {
@@ -376,7 +458,7 @@ FLPT * multiply_ucds27(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
         return NULL;
     }
 
-    const INTG idiagnum = 27;
+    const INTG idiagnum = LARGEDIAG;
     INTG i, j; /* Iteration variables */
     INTG lrevindex; /* Current diagonal index to evaluate. */
     INTG miniter, maxiter; /* Sets range to iterate over in value lookup. */
@@ -410,7 +492,7 @@ FLPT * multiply_ucdsalt27(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
         return NULL;
     }
 
-    const INTG idiagnum = 27;
+    const INTG idiagnum = LARGEDIAG;
     INTG i, j; /* Iteration variables */
     INTG lrevindex; /* Current diagonal index to evaluate. */
     INTG miniter, maxiter; /* Sets range to iterate over in value lookup. */
@@ -444,7 +526,7 @@ FLPT * multiply_ucds5(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
         return NULL;
     }
 
-    const INTG idiagnum = 5;
+    const INTG idiagnum = MIDDIAG;
     INTG i, j; /* Iteration variables */
     INTG lrevindex; /* Current diagonal index to evaluate. */
     INTG miniter, maxiter; /* Sets range to iterate over in value lookup. */
@@ -478,7 +560,7 @@ FLPT * multiply_ucdsalt5(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
         return NULL;
     }
 
-    const INTG idiagnum = 5;
+    const INTG idiagnum = MIDDIAG;
     INTG i, j; /* Iteration variables */
     INTG lrevindex; /* Current diagonal index to evaluate. */
     INTG miniter, maxiter; /* Sets range to iterate over in value lookup. */
@@ -504,6 +586,143 @@ FLPT * multiply_ucdsalt5(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
     }
     return dret; 
 }
+
+FLPT * multiply_ucdsd27(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
+{
+    if ((ourucds == NULL) || (dvector == NULL) || (dret == NULL))
+    {
+        return NULL;
+    }
+
+//    const INTG idiagnum = LARGEDIAG;
+    INTG i, j; /* Iteration variables */
+    INTG lrevindex; /* Current diagonal index to evaluate. */
+    INTG miniter, maxiter; /* Sets range to iterate over in value lookup. */
+    
+    for (i = 0; i < ourucds->lmatsize; i++)
+    {
+        dret[i] = 0.0;
+    }
+    
+    #pragma omp parallel for private(lrevindex, miniter, maxiter, j)
+    for (i = 0; i < LARGEDIAG; i++)
+    {
+        lrevindex = ourucds->ldiagindices[i];
+        miniter = max(0, lrevindex);
+        maxiter = min(ourucds->lmatsize - 1, ourucds->lmatsize - 1 
+            + lrevindex);
+        //#pragma omp parallel for
+        for (j = miniter; j <= maxiter; j++)
+        {
+            dret[j - lrevindex] += ourucds->ddiagelems[i*ourucds->lmatsize 
+                + j] * dvector[j];
+        }
+    }
+    return dret; 
+}
+
+FLPT * multiply_ucdsaltd27(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
+{
+    if ((ourucds == NULL) || (dvector == NULL) || (dret == NULL))
+    {
+        return NULL;
+    }
+
+//    const INTG idiagnum = LARGEDIAG;
+    INTG i, j; /* Iteration variables */
+    INTG lrevindex; /* Current diagonal index to evaluate. */
+    INTG miniter, maxiter; /* Sets range to iterate over in value lookup. */
+    
+    for (i = 0; i < ourucds->lmatsize; i++)
+    {
+        dret[i] = 0.0;
+    }
+    
+    //#pragma omp parallel for private(lrevindex, miniter, maxiter, j)
+    for (i = 0; i < LARGEDIAG; i++)
+    {
+        lrevindex = ourucds->ldiagindices[i];
+        miniter = max(0, lrevindex);
+        maxiter = min(ourucds->lmatsize - 1, ourucds->lmatsize - 1 
+            + lrevindex);
+        #pragma omp parallel for
+        for (j = miniter; j <= maxiter; j++)
+        {
+            dret[j - lrevindex] += ourucds->ddiagelems[i*ourucds->lmatsize 
+                + j] * dvector[j];
+        }
+    }
+    return dret; 
+}
+
+FLPT * multiply_ucdsd5(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
+{
+    if ((ourucds == NULL) || (dvector == NULL) || (dret == NULL))
+    {
+        return NULL;
+    }
+
+//    const INTG idiagnum = MIDDIAG;
+    INTG i, j; /* Iteration variables */
+    INTG lrevindex; /* Current diagonal index to evaluate. */
+    INTG miniter, maxiter; /* Sets range to iterate over in value lookup. */
+    
+    for (i = 0; i < ourucds->lmatsize; i++)
+    {
+        dret[i] = 0.0;
+    }
+    
+    #pragma omp parallel for private(lrevindex, miniter, maxiter, j)
+    for (i = 0; i < MIDDIAG; i++)
+    {
+        lrevindex = ourucds->ldiagindices[i];
+        miniter = max(0, lrevindex);
+        maxiter = min(ourucds->lmatsize - 1, ourucds->lmatsize - 1 
+            + lrevindex);
+        //#pragma omp parallel for
+        for (j = miniter; j <= maxiter; j++)
+        {
+            dret[j - lrevindex] += ourucds->ddiagelems[i*ourucds->lmatsize 
+                + j] * dvector[j];
+        }
+    }
+    return dret; 
+}
+
+FLPT * multiply_ucdsaltd5(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
+{
+    if ((ourucds == NULL) || (dvector == NULL) || (dret == NULL))
+    {
+        return NULL;
+    }
+
+//    const INTG idiagnum = MIDDIAG;
+    INTG i, j; /* Iteration variables */
+    INTG lrevindex; /* Current diagonal index to evaluate. */
+    INTG miniter, maxiter; /* Sets range to iterate over in value lookup. */
+    
+    for (i = 0; i < ourucds->lmatsize; i++)
+    {
+        dret[i] = 0.0;
+    }
+    
+    //#pragma omp parallel for private(lrevindex, miniter, maxiter, j)
+    for (i = 0; i < MIDDIAG; i++)
+    {
+        lrevindex = ourucds->ldiagindices[i];
+        miniter = max(0, lrevindex);
+        maxiter = min(ourucds->lmatsize - 1, ourucds->lmatsize - 1 
+            + lrevindex);
+        #pragma omp parallel for
+        for (j = miniter; j <= maxiter; j++)
+        {
+            dret[j - lrevindex] += ourucds->ddiagelems[i*ourucds->lmatsize 
+                + j] * dvector[j];
+        }
+    }
+    return dret; 
+}
+
 
 
 /*
@@ -532,80 +751,12 @@ void printvector(const char* name, INTG isize, const FLPT* dvector)
     printf("%f]\n", dvector[isize - 1]);
 }
 
-FLPT * dconjgrad(const ucds * ucdsa, const FLPT * dvectb, const FLPT *dvectx0,
-    FLPT * dvectx, fpmult fpucdsmult, fpnorm fpdnorm, const INTG imode, 
-    const FLPT derror, INTG * iiter)
-{
-    INTG icount = 0; /* The iteration count. */
-    INTG ivectorsize = ucdsa->lmatsize; /* The size of matrices and vectors. */
-    FLPT * drvect[2]; /* Stores r_even and r_odd vectors. */
-    FLPT drdotpd[2]; /* Stores dot products of same. */
-    FLPT * dpvect = dassign(ivectorsize); /* Stores p vector. */
-    FLPT * dapproduct = dassign(ivectorsize); /* For product of A and p_k. */
-    FLPT dalpha, dbeta; /* Alpha and beta. */
-    FLPT normval;
-    
-/* Initialise the algorithm. */
-
-    drvect[0] = dassign(ivectorsize);
-    drvect[1] = dassign(ivectorsize);
-    dapproduct = fpucdsmult(ucdsa, dvectx0, dapproduct);
-    printvector("dapproduct", ivectorsize, dapproduct);
-    drvect[0] = dvectsub (ivectorsize, dvectb, dapproduct, drvect[0]);
-    dveccopy(ivectorsize, dpvect, drvect[0]);
-    dveccopy(ivectorsize, dvectx, dvectx0);
-    drdotpd[icount % 2] = dselfdprod(ivectorsize, drvect[icount % 2]);
-    while (1)
-    {
-        dapproduct = fpucdsmult(ucdsa, dpvect, dapproduct);
-        printvector("dapproduct", ivectorsize, dapproduct);
-        dalpha = drdotpd[icount % 2] / ddotprod(ivectorsize, dpvect, 
-            dapproduct);
-        daddinsitu(ivectorsize, dvectx, dalpha, dpvect);
-        printvector("dvectx", ivectorsize, dvectx);
-        drvect[(icount + 1) % 2] = daddtwosums(ivectorsize, 
-            drvect[(icount + 1) % 2], drvect[icount % 2], 1.0, 
-            dapproduct, dalpha * (-1.0));
-        printvector("dvectr", ivectorsize, drvect[(icount + 1) % 2]);
-        printf("A, %d, %d, %f\n", ivectorsize, imode, derror); 
-        normval = fpdnorm(ivectorsize, imode, drvect[(icount + 1) % 2]);
-        printf("Aextra\n, %f\nbg", normval);        
-        if (normval < derror)
-        {
-                    printf("B");
-            break;
-        }
-        printf("C");        
-        drdotpd[(icount % 2) + 1] = dselfdprod(ivectorsize, 
-            drvect[(icount % 2) + 1]);
-        printf("D");
-        dbeta = dselfdprod(ivectorsize, drvect[(icount + 1) % 2])
-             / dselfdprod(ivectorsize, drvect[icount % 2]);
-        printf("E");
-        dpvect = daddtwosums(ivectorsize, dpvect, drvect[(icount + 1) % 2], 
-            1.0, dpvect, dbeta); 
-        printvector("dpvect", ivectorsize, dpvect);
-        icount = icount + 1;
-    }
-    printf("F");
-    if (iiter != NULL)
-    {
-        *iiter = icount;
-    }
-    free(dpvect);
-    free(dapproduct);
-    free(drvect[0]);
-    free(drvect[1]);
-    return dvectx;
-}
-
 /*
 // The following implementation is from 5.1, p.42 of Henk A. van der Vorst,
 // "Iterative Krylov Methods for Large Linear Systems".
 */
 
-
-FLPT * dexpconjgrad(const ucds * ucdsa, const FLPT * dvectb, const FLPT *dvectx0,
+FLPT * dconjgrad(const ucds * ucdsa, const FLPT * dvectb, const FLPT *dvectx0,
     FLPT * dvectx, fpmult fpucdsmult, fpnorm fpdnorm, 
     INTG imode, const FLPT derror, INTG * inoiter)
 {
@@ -629,12 +780,8 @@ FLPT * dexpconjgrad(const ucds * ucdsa, const FLPT * dvectb, const FLPT *dvectx0
     drvectors[1] = dassign(ivectorsize);
     dnormvector = dassign(ivectorsize);
     
-    INTG i; /* An iteration variable. */
-    #pragma omp parallel for
-    for (i = 0; i < ivectorsize; i++)
-    {
-        dvectx[i] = 0.0;
-    }    
+    doverwritevector(ivectorsize, 0.0, dvectx);
+   
     fpucdsmult(ucdsa, dvectx0, dqvector);
     dvectsub (ivectorsize, dvectb, dqvector, drvectors[0]);
     while(1)
@@ -656,11 +803,8 @@ FLPT * dexpconjgrad(const ucds * ucdsa, const FLPT * dvectb, const FLPT *dvectx0
         daddinsitu (ivectorsize, dvectx, alpha, dpvector);
         daddtwosums (ivectorsize, drvectors[icount % 2], drvectors[(icount - 1) % 2],
             1.0, dqvector, -1.0 * alpha);
- //       printvector("drvect", ivectorsize, drvectors[icount % 2]);
-    //            printvector("dxvect", ivectorsize, dvectx);
         dscalarprod (ivectorsize, alpha, dqvector, dnormvector);
         dnorm = dvectnorm (ivectorsize, imode, dnormvector);
-        
         if (dnorm < derror)
         {
             free(dpvector);

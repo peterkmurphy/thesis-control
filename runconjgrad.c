@@ -1,5 +1,5 @@
 /* 
-// runucds.c. Runs time tests on Ultra Compressed Diagonal Storage.
+// runconjgrad.c. Runs time tests on Conjugate Gradient.
 // Written by Peter Murphy. (c) 2013
 */
 
@@ -57,6 +57,12 @@ int main(int argc, char *argv[])
         return (0);
     }
 
+    
+/* And a zero vector to initalise the conjugate gradient function. */
+
+    FLPT *dzerovector = dsetvector(imatsize, 0.0); 
+
+    INTG icount;    
     
 /* Now we initialise the test data.*/
     
@@ -120,6 +126,7 @@ int main(int argc, char *argv[])
     for (i = 0; i < inotests; i++)
     {
         ourtestbed[i].dret = dassign(imatsize);
+        ourtestbed[i].inoreps = 0;
         if (i == 8)
         {
             ourtestbed[i].thefp = &multiply_ucdsalt27;
@@ -208,11 +215,15 @@ int main(int argc, char *argv[])
     
     for (i = 0; i < inotests; i++)
     {
+        printf ("%d\n", i);
         clock_gettime(CLOCK_MONOTONIC, &start); 
         for (j = 0; j < inoreps; j++)
         {
-            ourtestbed[i].dret = (* ourtestbed[i].thefp)(ourtestbed[i].ourucds,
-            dvector, ourtestbed[i].dret);
+            printf("%d\n", j);
+            dconjgrad(ourtestbed[i].ourucds,
+                dvector, dzerovector, ourtestbed[i].dret,
+                ourtestbed[i].thefp, dvectnorm, 2, 0.1, &icount); /* &istore */
+            ourtestbed[i].inoreps += icount;
         } 
         clock_gettime(CLOCK_MONOTONIC, &end);
         ourtestbed[i].testlen = timespecDiff(&end, &start);

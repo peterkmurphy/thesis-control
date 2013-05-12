@@ -20,8 +20,8 @@ for eff in EFF_OPTIONS:
     for ismp in [True, False]:
         if ismp:
             x = subprocess.call(["gcc", "-Wall", OPENMPOP, EFF_OP, "ucds.c", 
-                "runucds.c", "-o", "mpucds" + eff, "-lrt", "-lm"]);
+                "runconjgrad.c", "-o", "mpucdscg" + eff, "-lrt", "-lm"]);
         else:
             x = subprocess.call(["gcc", "-Wall", EFF_OP, "ucds.c", 
-                "runucds.c", "-o", "ucds" + eff, "-lrt", "-lm"]);            
+                "runconjgrad.c", "-o", "ucdscg" + eff, "-lrt", "-lm"]);            
 
