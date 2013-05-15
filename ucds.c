@@ -194,9 +194,9 @@ FLPT dvectnorm (const INTG lvectsize, const INTG mode,
         for (i = 0; i < lvectsize; i++)
         {
             #pragma omp critical
-            if (dresult < dvectin[i])
+            if (dresult < fabs(dvectin[i]))
             {
-                dresult = dvectin[i];
+                dresult = fabs(dvectin[i]);
             }
         }
     }        
@@ -374,49 +374,13 @@ FLPT * multiply_ucds(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
 //        #pragma omp parallel for
         for (j = miniter; j <= maxiter; j++)
         {
+            #pragma omp atomic
             dret[j - lrevindex] += ourucds->ddiagelems[i*ourucds->lmatsize 
                 + j] * dvector[j];
         }
     }
     return dret; 
 }
-
-FLPT * multiply_ucdsexpanded(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
-{
-    if ((ourucds == NULL) || (dvector == NULL) || (dret == NULL))
-    {
-        return NULL;
-    }
-    
-    INTG i, j; /* Iteration variables */
- //   INTG lrevindex; /* Current diagonal index to evaluate. */
- //   INTG miniter, maxiter; /* Sets range to iterate over in value lookup. */
-    
-    for (i = 0; i < ourucds->lmatsize; i++)
-    {
-        dret[i] = 0.0;
-    }
-    #pragma omp parallel
-    {
-    #pragma omp for private(j)
-    for (i = 0; i < ourucds->lnumdiag; i++)
-    {
- //       lrevindex = ourucds->ldiagindices[i];
-  //      miniter = max(0, ourucds->ldiagindices[i]);
- //       maxiter = min(ourucds->lmatsize - 1, ourucds->lmatsize - 1 
-    //        + ourucds->ldiagindices[i]);
-    //    #pragma omp parallel for
-        for (j = max(0, ourucds->ldiagindices[i]); j <= min(ourucds->lmatsize - 1, ourucds->lmatsize - 1 
-            + ourucds->ldiagindices[i]); j++)
-        {
-            dret[j - ourucds->ldiagindices[i]] = dret[j - ourucds->ldiagindices[i]] + ourucds->ddiagelems[i*ourucds->lmatsize 
-                + j] * dvector[j];
-        }
-    }
-    }
-    return dret; 
-}
-
 
 FLPT * multiply_ucdsalt(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
 {
@@ -751,6 +715,29 @@ void printvector(const char* name, INTG isize, const FLPT* dvector)
     printf("%f]\n", dvector[isize - 1]);
 }
 
+void printintvector(const char* name, INTG isize, const INTG* dvector)
+{
+    printf("%s: [", name);
+    INTG i;
+    for (i = 0; i < (isize - 1); i++)
+    {
+        printf("%d, ", dvector[i]);
+    }
+    printf("%d]\n", dvector[isize - 1]);
+}
+
+
+
+void printucds(const char * name, ucds * ourucds)
+{
+    printf("name: %s, matrix size: %d, number of diagonals: %d, ", name, 
+        ourucds->lmatsize, ourucds->lnumdiag);
+    printintvector("diagindices", ourucds->lnumdiag, ourucds->ldiagindices);
+    printvector("values", ourucds->lnumdiag * ourucds->lmatsize,
+        ourucds->ddiagelems);
+}
+
+    
 /*
 // The following implementation is from 5.1, p.42 of Henk A. van der Vorst,
 // "Iterative Krylov Methods for Large Linear Systems".
@@ -767,8 +754,8 @@ FLPT * dconjgrad(const ucds * ucdsa, const FLPT * dvectb, const FLPT *dvectx0,
     FLPT * dqvector;
     FLPT * dbetapproduct;
     FLPT * drvectors[2]; /* Needed for r_even and r_odd storage. */
-    FLPT * dnormvector;
-    FLPT rhos[2]; /* Needed for the rhos. */
+//    FLPT * dnormvector;
+    FLPT rhos[2] = {1.0, 1.0}; /* Needed for the rhos. */
     FLPT dnorm;
     
 /* Time to initialise. */
@@ -778,33 +765,45 @@ FLPT * dconjgrad(const ucds * ucdsa, const FLPT * dvectb, const FLPT *dvectx0,
     dbetapproduct = dassign(ivectorsize);
     drvectors[0] = dassign(ivectorsize);
     drvectors[1] = dassign(ivectorsize);
-    dnormvector = dassign(ivectorsize);
+ //   dnormvector = dassign(ivectorsize);
     
     doverwritevector(ivectorsize, 0.0, dvectx);
-   
+//    printvector("dvectorb", ivectorsize, dvectb);
+ //   printvector("dvectx", ivectorsize, dvectx);
     fpucdsmult(ucdsa, dvectx0, dqvector);
+  //  printvector("dqvector", ivectorsize, dqvector);
     dvectsub (ivectorsize, dvectb, dqvector, drvectors[0]);
+  //  printvector("dr0vector", ivectorsize, drvectors[0]);
     while(1)
     {
         rhos[(icount - 1) % 2] = dselfdprod(ivectorsize, drvectors[(icount - 1) % 2]);
+  //      printf("rho%d is %f\n", (icount - 1), rhos[(icount - 1) % 2]);
         if (icount == 1)
         {
             dveccopy(ivectorsize, dpvector, drvectors[(icount - 1) % 2]);
+  //          printvector("dpvector", ivectorsize, dpvector);
         }
         else
         {
             beta = rhos[(icount - 1) % 2]/rhos[icount % 2];
+   //         printf("Beta: %f\n", beta);
             dscalarprod (ivectorsize, beta, dpvector, dbetapproduct);
             dvectadd (ivectorsize, drvectors[(icount - 1) % 2], dbetapproduct, dpvector);
             dveccopy(ivectorsize, dpvector, drvectors[(icount - 1) % 2]);
+  //          printvector("dpvector", ivectorsize, dpvector);
         }
         fpucdsmult(ucdsa, dpvector, dqvector);
+ //       printvector("dqvector", ivectorsize, dqvector);
         alpha = rhos[(icount - 1) % 2]/ddotprod(ivectorsize, dpvector, dqvector); 
+ //       printf("Alpha: %f\n", alpha);
         daddinsitu (ivectorsize, dvectx, alpha, dpvector);
+  //      printvector("dxvector", ivectorsize, dvectx);
         daddtwosums (ivectorsize, drvectors[icount % 2], drvectors[(icount - 1) % 2],
             1.0, dqvector, -1.0 * alpha);
-        dscalarprod (ivectorsize, alpha, dqvector, dnormvector);
-        dnorm = dvectnorm (ivectorsize, imode, dnormvector);
+  //      printvector("drvector", ivectorsize, drvectors[icount % 2]);
+//        dscalarprod (ivectorsize, alpha, dqvector, dnormvector);
+        dnorm = dvectnorm (ivectorsize, imode, drvectors[icount % 2]);
+ //       printf("Norm: %f\n", alpha);
         if (dnorm < derror)
         {
             free(dpvector);
@@ -812,7 +811,7 @@ FLPT * dconjgrad(const ucds * ucdsa, const FLPT * dvectb, const FLPT *dvectx0,
             free(dbetapproduct);
             free(drvectors[0]);
             free(drvectors[1]);
-            free(dnormvector);
+ //           free(dnormvector);
             if (inoiter != NULL)
             {
                 *inoiter = icount;

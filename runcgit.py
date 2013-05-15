@@ -15,8 +15,8 @@ OPENMP_OPTIONS = ["", "mp"];
 
 # These give ranges to try out.
 
-MINMATSIZE = 16 #1024;
-MAXMATSIZE = 64 #8193 #1000000;
+MINMATSIZE = 1024;
+MAXMATSIZE = 8193 #1000000;
 
 # Now we try out the executables.
 
@@ -26,6 +26,6 @@ for k in EFF_OPTIONS:
         i = MINMATSIZE; # The minimum iteration amount
         print ourFile;
         while i < MAXMATSIZE:
-            subprocess.call([ourFile, str(i), "500"]);
+            subprocess.call([ourFile, str(i), "1"]);
             i *= 2;
 

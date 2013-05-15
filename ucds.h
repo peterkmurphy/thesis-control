@@ -453,6 +453,10 @@ TLEN timespecDiff(struct timespec *ptime1, struct timespec *ptime2);
 
 void printvector(const char* name, INTG isize, const FLPT* dvector);
 
+/*
+// The printucds function prints an ucds instance to standard output. */
+
+void printucds(const char * name, ucds * ourucds);
 
 /*
 // The dconjgrad function is an implementation of the conjugate gradient
