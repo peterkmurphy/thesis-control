@@ -324,6 +324,7 @@ INTG createspdd(INTG inodiags, INTG * ldiagelems, FLPT * ddiagvals)
 
 mmtestbed * mmsetup(INTG lnumdiag, INTG ivectsize, mmtestbed * mmref)
 {
+    mmref->lnumdiag = lnumdiag;
     mmref->ldiagindices = (INTG *) malloc (lnumdiag * sizeof(INTG));
     mmref->ddiagelems = dassign(lnumdiag);
     createspdd(lnumdiag, mmref->ldiagindices, mmref->ddiagelems);
@@ -442,6 +443,7 @@ FLPT * multiply_ucds27(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
         //#pragma omp parallel for
         for (j = miniter; j <= maxiter; j++)
         {
+            #pragma omp atomic
             dret[j - lrevindex] += ourucds->ddiagelems[i*ourucds->lmatsize 
                 + j] * dvector[j];
         }
@@ -510,6 +512,7 @@ FLPT * multiply_ucds5(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
         //#pragma omp parallel for
         for (j = miniter; j <= maxiter; j++)
         {
+            #pragma omp atomic
             dret[j - lrevindex] += ourucds->ddiagelems[i*ourucds->lmatsize 
                 + j] * dvector[j];
         }
@@ -578,6 +581,7 @@ FLPT * multiply_ucdsd27(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
         //#pragma omp parallel for
         for (j = miniter; j <= maxiter; j++)
         {
+            #pragma omp atomic
             dret[j - lrevindex] += ourucds->ddiagelems[i*ourucds->lmatsize 
                 + j] * dvector[j];
         }
@@ -646,6 +650,7 @@ FLPT * multiply_ucdsd5(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
         //#pragma omp parallel for
         for (j = miniter; j <= maxiter; j++)
         {
+            #pragma omp atomic
             dret[j - lrevindex] += ourucds->ddiagelems[i*ourucds->lmatsize 
                 + j] * dvector[j];
         }

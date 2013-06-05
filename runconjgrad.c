@@ -1,5 +1,6 @@
 /* 
-// runconjgrad.c. Runs time tests on Conjugate Gradient.
+// runconjgrad.c. Runs tests that measures the time taken to
+// execute conjugate gradient.
 // Written by Peter Murphy. (c) 2013
 */
 
@@ -21,7 +22,7 @@ int main(int argc, char *argv[])
     
     if (argc < 3)
     {
-        printf("To execute this, type:\n\nudcs n m\n\nWhere:\nn (>= ");
+        printf("To execute this, type:\n\n[exec] n m\n\nWhere:\nn (>= ");
         printf("%d) ", iminmatsize);
         printf("is the size of the matrices to be multiplied and tested;");
         printf("\nm (>= 1) is the number of repetitions.\n\n");
@@ -61,7 +62,7 @@ int main(int argc, char *argv[])
 /* Now this is an attempt to set up a test environment. */
 
     FLPT *dzerovector = dsetvector(imatsize, 0.0); 
-    const INTG inotests = 10;
+    const INTG inotests = 20;
     INTG icount;    
     
    
@@ -75,35 +76,58 @@ int main(int argc, char *argv[])
 /* The test bed itself. */    
      
     mmtestbed ourtestbed[inotests];
-    INTG iminisize = imatsize * 2 + 2;
+    INTG iminisize = (imatsize * 2) - 1; /* Number of diagonals. */
     INTG imaxiter;
-    INTG immindices[10] = {5, 5, 5, 9, 15, 27, 27, 27, 45, 81};
+    INTG immindices[20] = {5, 5, 5, 5, 5, 5, 9, 9, 15, 15, 27, 27, 27, 27, 27, 27, 
+        45, 45, 81, 81};
     for (i = 0; i < inotests; i++)
     {
 //        printf("Diag: %d\n", immindices[i]);
         if (immindices[i] < iminisize)
         {
             mmsetup(immindices[i], imatsize, &(ourtestbed[i]));
-            if (i == 6)
+            if (i == 13)
             {
                 ourtestbed[i].thefp = &multiply_ucdsalt27;
             }
-            else if (i == 7)
+            else if (i == 15)
             {
                 ourtestbed[i].thefp = &multiply_ucdsaltd27;
-            }            
-            else if (i == 1)
+            } 
+
+            if (i == 12)
+            {
+                ourtestbed[i].thefp = &multiply_ucds27;
+            }
+            else if (i == 14)
+            {
+                ourtestbed[i].thefp = &multiply_ucdsd27;
+            }  
+            else if (i == 3)
             {
                 ourtestbed[i].thefp = &multiply_ucdsalt5;
             }
-            else if (i == 2)
+            else if (i == 5)
             {
                 ourtestbed[i].thefp = &multiply_ucdsaltd5;
             }
-            else
+            else if (i == 2)
+            {
+                ourtestbed[i].thefp = &multiply_ucds5;
+            }
+            else if (i == 4)
+            {
+                ourtestbed[i].thefp = &multiply_ucdsd5;
+            }            
+            else if ((i % 2) == 1)
             { 
                 ourtestbed[i].thefp = &multiply_ucdsalt;
             }
+            else
+            {
+                ourtestbed[i].thefp = &multiply_ucds;
+            }
+
         }
     }        
     
@@ -134,7 +158,7 @@ int main(int argc, char *argv[])
 
     for (i = 0; i < inotests; i++)
     {
-        printf("%f - ", (FLPT) ourtestbed[i].testlen / ((FLPT)TLPERS * (FLPT)ourtestbed[i].inoreps)); // (FLPT)((1.0 * TLPERS * imatsize * inoreps * ourtestbed[i].inoreps * 
+        printf("%f - ", (FLPT) ourtestbed[i].testlen / (/*(FLPT)TLPERS1.0 * */(FLPT)ourtestbed[i].inoreps)); // (FLPT)((1.0 * TLPERS * imatsize * inoreps * ourtestbed[i].inoreps * 
      //       ourtestbed[i].lnumdiag)/(1000000.0 * ourtestbed[i].testlen)));
     }
     printf("%d\n", imatsize);

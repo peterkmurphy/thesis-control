@@ -1,14 +1,17 @@
 /* 
 // testucds.c. Runs tests on Ultra Compressed Diagonal Storage
-// for correctness, not time.
+// and Conjugate Gradient for correctness, not time. Also 
+// checks routines like norms, vector products and scalar
+// products for correctness.
 // Written by Peter Murphy. (c) 2013
 */
 
 #include "ucds.h"
 
 /*
-// We do some "expected value" functions for vectors consisting
-// only of a particular value. 
+// Norms on vectors consisting only of a particular value would
+// return an expected number; this function checks if the norms
+// actually return the expected value. 
 */
 
 FLPT expectedvaluenorm(const INTG ivectsize, const INTG imode, 
@@ -29,8 +32,8 @@ FLPT expectedvaluenorm(const INTG ivectsize, const INTG imode,
 }
 
 /* 
-// We have an expected vector vector, where one expects all values to equal
-// a certain value.
+// This checks if all the value in the vector dvector (with size
+// ivectsize) are equal to the given value dvalue.
 */
 
 INTG bisallvalues(const INTG ivectsize, const FLPT dvalue, 
@@ -188,7 +191,7 @@ int main(int argc, char *argv[])
     
     if (argc < 3)
     {
-        printf("To execute this, type:\n\nudcs n m\n\nWhere:\nn (>= ");
+        printf("To execute this, type:\n\n[exec] n m\n\nWhere:\nn (>= ");
         printf("%d) ", iminmatsize);
         printf("is the size of the matrices to be multiplied and tested;");
         printf("\nm (>= 1) is the number of repetitions.\n\n");
@@ -368,6 +371,6 @@ int main(int argc, char *argv[])
     free(dzerovector); 
     free(dmultvector);
     free(ddifvector);
-//    printf("We made it with a matrix size of %d!\n", imatsize);
+    printf("We made it with a matrix size of %d!\n", imatsize);
     return 0;
 }

@@ -1,10 +1,12 @@
 /* 
-// runucds.c. Runs time tests on Ultra Compressed Diagonal Storage.
+// runucds.c. Measures the time it takes to multiply two matrices using
+// Ultra Compressed Diagonal Storage; measures the time to execute other
+// routines such as vector norms and scalar products. Attempts to measure
+// the time taken per size of the input - preferably in MFP/s.
 // Written by Peter Murphy. (c) 2013
 */
 
 #include "ucds.h"
-
 
 int main(int argc, char *argv[])
 {
@@ -21,7 +23,7 @@ int main(int argc, char *argv[])
     
     if (argc < 3)
     {
-        printf("To execute this, type:\n\nudcs n m\n\nWhere:\nn (>= ");
+        printf("To execute this, type:\n\n[exec] n m\n\nWhere:\nn (>= ");
         printf("%d) ", iminmatsize);
         printf("is the size of the matrices to be multiplied and tested;");
         printf("\nm (>= 1) is the number of repetitions.\n\n");
@@ -50,159 +52,75 @@ int main(int argc, char *argv[])
     
     INTG i, j;
     struct timespec start, end;
-    FLPT * dvector = dsetvector(imatsize, 1.0);
-    if (dvector == NULL)
+    FLPT * didentvector = dsetvector(imatsize, 1.0); /* Has equal values. */
+    FLPT * dvectout = dsetvector(imatsize, 0.0);
+    if (didentvector == NULL)
     {
         printf("The function is unable to allocate a simple vector.\n"); 
         return (0);
     }
 
-    
-/* Now we initialise the test data.*/
-    
-    const INTG inotests = NUMTESTS;
+/* Now this is an attempt to set up a test environment. */
 
-/* Code for 3 diagonal UCDS. */
-    
-    const INTG inumsimpdiag = SMALLDIAG;
-    INTG lsimpelems[SMALLDIAG] = {-1, 0, 1};
-    
-/* For simple identity matrices. */    
-    
-    FLPT delems_id[SMALLDIAG] = {0.0, 1.0, 0.0};  
-    
-/* For simple PDEs. */    
-    
-    FLPT delems_pde[SMALLDIAG] = {-1.0, 4.0, -1.0};     
-    
-/* Code for 5 diagonal UCDS. */
-
-    const INTG inummiddiag = MIDDIAG;
-    INTG lmidelems[MIDDIAG] = {-3, -1, 0, 1, 3};
-    FLPT dmidel_vals[MIDDIAG] = {-1.0, -1.0, 4.0, -1.0, -1.0};    
-
-/* Code for 27 diagonal UCDS. */
-    
-    const INTG inumlargdiag = LARGEDIAG;
-    INTG llargelems[LARGEDIAG];
-    FLPT dlargel_vals[LARGEDIAG];
-    i = createspdd(inumlargdiag, llargelems, dlargel_vals);
-
-    
-/* 
-// Code for other UCDSs with different numbers of diagonals. 
-// The numbers are chosen (9, 15, 45, 81) because they are
-// useful to see how UCDS performs for larger problems, rather
-// than how they do with EPDEs.
-*/
-
-    const INTG inum9 = 9;
-    INTG l9elems[inum9];
-    FLPT d9vals[inum9];
-    i = createspdd(inum9, l9elems, d9vals);    
-    const INTG inum15 = 15;
-    INTG l15elems[inum15];
-    FLPT d15vals[inum15];
-    i = createspdd(inum15, l15elems, d15vals);    
-    const INTG inum45 = 45;
-    INTG l45elems[inum45];
-    FLPT d45vals[inum45];
-    i = createspdd(inum45, l45elems, d45vals);    
-    const INTG inum81 = 81;
-    INTG l81elems[inum81];
-    FLPT d81vals[inum81];
-    i = createspdd(inum81, l81elems, d81vals);    
-    
+//    FLPT *dzerovector = dsetvector(imatsize, 0.0); 
+    const INTG inotests = 20;
+//    INTG icount;
     
 /* The test bed itself. */    
     
     mmtestbed ourtestbed[inotests];
+//    INTG iminisize = (imatsize * 2) - 1; /* Number of diagonals. */
+    INTG immindices[20] = {5, 5, 5, 5, 5, 5, 9, 9, 15, 15, 27, 27, 27, 27, 27, 27, 
+        45, 45, 81, 81};    
+    
     for (i = 0; i < inotests; i++)
     {
-        ourtestbed[i].dret = dassign(imatsize);
-        if (i == 8)
-        {
-            ourtestbed[i].thefp = &multiply_ucdsalt27;
-        }
-        else if (i == 9)
-        {
-            ourtestbed[i].thefp = &multiply_ucdsaltd27;
-        }            
-        else if (i == 3)
-        {
-            ourtestbed[i].thefp = &multiply_ucdsalt5;
-        }
-        else if (i == 4)
-        {
-            ourtestbed[i].thefp = &multiply_ucdsaltd5;
-        }
-        else
-        {
-            ourtestbed[i].thefp = &multiply_ucdsalt;
-        }
+    //    printf("Diag: %d\n", immindices[i]);
+ //           printf("Diag: %d\n", immindices[i]);
+            mmsetup(immindices[i], imatsize, &(ourtestbed[i]));
+            if (i == 13)
+            {
+                ourtestbed[i].thefp = &multiply_ucdsalt27;
+            }
+            else if (i == 15)
+            {
+                ourtestbed[i].thefp = &multiply_ucdsaltd27;
+            } 
 
-/* 
-// Then we set the related objects - the number of diagonals, their indices
-// and their values.
-*/        
+            if (i == 12)
+            {
+                ourtestbed[i].thefp = &multiply_ucds27;
+            }
+            else if (i == 14)
+            {
+                ourtestbed[i].thefp = &multiply_ucdsd27;
+            }  
+            else if (i == 3)
+            {
+                ourtestbed[i].thefp = &multiply_ucdsalt5;
+            }
+            else if (i == 5)
+            {
+                ourtestbed[i].thefp = &multiply_ucdsaltd5;
+            }
+            else if (i == 2)
+            {
+                ourtestbed[i].thefp = &multiply_ucds5;
+            }
+            else if (i == 4)
+            {
+                ourtestbed[i].thefp = &multiply_ucdsd5;
+            }            
+            else if ((i % 2) == 1)
+            { 
+                ourtestbed[i].thefp = &multiply_ucdsalt;
+            }
+            else
+            {
+                ourtestbed[i].thefp = &multiply_ucds;
+            }
+    }        
 
-        switch(i)
-        {
-            case 0: /* Identity matrix */
-            case 1: /* -1, 4, 1 stencil */
-                ourtestbed[i].lnumdiag = inumsimpdiag;
-                ourtestbed[i].ldiagindices = lsimpelems;
-                if (i == 0)
-                {
-                    ourtestbed[i].ddiagelems = delems_id;
-                }
-                else
-                {
-                    ourtestbed[i].ddiagelems = delems_pde;
-                }
-                break;
-            case 2: /* -1, -1, 4, 1, 1, stencil with multiply_ucdsalt */
-            case 3: /* Ditto with multiply_ucdsalt5 function. */
-            case 4: /* Ditto with multiply_ucdsaltd5 function. */
-                ourtestbed[i].lnumdiag = inummiddiag;
-                ourtestbed[i].ldiagindices = lmidelems;
-                ourtestbed[i].ddiagelems = dmidel_vals;
-                break;
-            case 5: /* 9 diagonal matrix. */
-                ourtestbed[i].lnumdiag = inum9;
-                ourtestbed[i].ldiagindices = l9elems;
-                ourtestbed[i].ddiagelems = d9vals;
-                break;
-            case 6: /* 15 diagonal matrix. */
-                ourtestbed[i].lnumdiag = inum15;
-                ourtestbed[i].ldiagindices = l15elems;
-                ourtestbed[i].ddiagelems = d15vals;
-                break;                
-            case 7: /* 27 diagonal matrix. */
-            case 8: /* Ditto with multiply_ucds27 */
-            case 9: /* Ditto with multiply_ucdsd27 */
-                ourtestbed[i].lnumdiag = inumlargdiag;
-                ourtestbed[i].ldiagindices = llargelems;
-                ourtestbed[i].ddiagelems = dlargel_vals;
-                break;
-            case 10: /* 45 diagonal matrix. */
-                ourtestbed[i].lnumdiag = inum45;
-                ourtestbed[i].ldiagindices = l45elems;
-                ourtestbed[i].ddiagelems = d45vals;
-                break;                 
-            default: /* 81 diagonal matrix. */    
-                ourtestbed[i].lnumdiag = inum81;
-                ourtestbed[i].ldiagindices = l81elems;
-                ourtestbed[i].ddiagelems = d81vals;
-                break;             
-        }
-
-/* Then we initialise the UCDS object. */
-        
-        ourtestbed[i].ourucds = mmatrix_ucds(imatsize, 
-            ourtestbed[i].ldiagindices, ourtestbed[i].ddiagelems, 
-            ourtestbed[i].lnumdiag);
-    }
 
 /* Now we run the tests. */
     
@@ -212,7 +130,7 @@ int main(int argc, char *argv[])
         for (j = 0; j < inoreps; j++)
         {
             ourtestbed[i].dret = (* ourtestbed[i].thefp)(ourtestbed[i].ourucds,
-            dvector, ourtestbed[i].dret);
+            didentvector, ourtestbed[i].dret);
         } 
         clock_gettime(CLOCK_MONOTONIC, &end);
         ourtestbed[i].testlen = timespecDiff(&end, &start);
@@ -238,14 +156,13 @@ int main(int argc, char *argv[])
 /* These are dummy variables for taking the outputs of functions. */
 
     FLPT ddummy;
-    FLPT * dvectout = dsetvector(imatsize, 0.0);
     
 /* Here are the tests. */    
     
     clock_gettime(CLOCK_MONOTONIC, &start); 
     for (j = 0; j < inoreps; j++)
     {
-        ddummy = ddotprod (imatsize, dvector, dvector);
+        ddummy = ddotprod (imatsize, didentvector, didentvector);
     } 
     clock_gettime(CLOCK_MONOTONIC, &end);
     tdotprod = (1.0 * TLPERS * inoreps * imatsize) /
@@ -255,7 +172,7 @@ int main(int argc, char *argv[])
     clock_gettime(CLOCK_MONOTONIC, &start); 
     for (j = 0; j < inoreps; j++)
     {
-        dvectout = dscalarprod (imatsize, 2.0, dvector, dvectout);
+        dvectout = dscalarprod (imatsize, 2.0, didentvector, dvectout);
     } 
     clock_gettime(CLOCK_MONOTONIC, &end);
     tscalprod = (1.0 * TLPERS * inoreps * imatsize) /
@@ -265,7 +182,7 @@ int main(int argc, char *argv[])
     clock_gettime(CLOCK_MONOTONIC, &start); 
     for (j = 0; j < inoreps; j++)
     {
-        dvectout = dvectadd(imatsize, dvector, dvector, dvectout);
+        dvectout = dvectadd(imatsize, didentvector, didentvector, dvectout);
     } 
     clock_gettime(CLOCK_MONOTONIC, &end);
     tvectadd = (1.0 * TLPERS * inoreps * imatsize) /
@@ -275,7 +192,7 @@ int main(int argc, char *argv[])
     clock_gettime(CLOCK_MONOTONIC, &start); 
     for (j = 0; j < inoreps; j++)
     {
-        dvectout = dvectsub(imatsize, dvector, dvector, dvectout);
+        dvectout = dvectsub(imatsize, didentvector, didentvector, dvectout);
     } 
     clock_gettime(CLOCK_MONOTONIC, &end);
     tvectsub = (1.0 * TLPERS * inoreps * imatsize) /
@@ -284,7 +201,7 @@ int main(int argc, char *argv[])
     clock_gettime(CLOCK_MONOTONIC, &start); 
     for (j = 0; j < inoreps; j++)
     {
-        ddummy = dvectnorm(imatsize, 1, dvector);
+        ddummy = dvectnorm(imatsize, 1, didentvector);
     } 
     clock_gettime(CLOCK_MONOTONIC, &end);
     tnorm1 = (1.0 * TLPERS * inoreps * imatsize) /
@@ -293,7 +210,7 @@ int main(int argc, char *argv[])
     clock_gettime(CLOCK_MONOTONIC, &start); 
     for (j = 0; j < inoreps; j++)
     {
-        ddummy = dvectnorm(imatsize, 2, dvector);
+        ddummy = dvectnorm(imatsize, 2, didentvector);
     } 
     clock_gettime(CLOCK_MONOTONIC, &end);
     tnorm2 = (1.0 * TLPERS * inoreps * imatsize) /
@@ -302,7 +219,7 @@ int main(int argc, char *argv[])
     clock_gettime(CLOCK_MONOTONIC, &start); 
     for (j = 0; j < inoreps; j++)
     {
-        ddummy = dvectnorm(imatsize, 3, dvector);
+        ddummy = dvectnorm(imatsize, 3, didentvector);
     } 
     clock_gettime(CLOCK_MONOTONIC, &end);
     tnorminf = (1.0 * TLPERS * inoreps * imatsize) /
@@ -312,7 +229,7 @@ int main(int argc, char *argv[])
     clock_gettime(CLOCK_MONOTONIC, &start); 
     for (j = 0; j < inoreps; j++)
     {
-        ddummy = daltnorm(imatsize, 1, dvector);
+        ddummy = daltnorm(imatsize, 1, didentvector);
     } 
     clock_gettime(CLOCK_MONOTONIC, &end);
     taltnorm1 = (1.0 * TLPERS * inoreps * imatsize) /
@@ -321,7 +238,7 @@ int main(int argc, char *argv[])
     clock_gettime(CLOCK_MONOTONIC, &start); 
     for (j = 0; j < inoreps; j++)
     {
-        ddummy = daltnorm(imatsize, 2, dvector);
+        ddummy = daltnorm(imatsize, 2, didentvector);
     } 
     clock_gettime(CLOCK_MONOTONIC, &end);
     taltnorm2 = (1.0 * TLPERS * inoreps * imatsize) /
@@ -330,7 +247,7 @@ int main(int argc, char *argv[])
     clock_gettime(CLOCK_MONOTONIC, &start); 
     for (j = 0; j < inoreps; j++)
     {
-        ddummy = daltnorm(imatsize, 3, dvector);
+        ddummy = daltnorm(imatsize, 3, didentvector);
     } 
     clock_gettime(CLOCK_MONOTONIC, &end);
     taltnorminf = (1.0 * TLPERS * inoreps * imatsize) /
@@ -344,19 +261,21 @@ int main(int argc, char *argv[])
     
     for (i = 0; i < inotests; i++)
     {
+      //  printf(" num %d, %d, %d, %ld\n", imatsize, inoreps, ourtestbed[i].lnumdiag, (TLPERS * imatsize * inoreps * 
+        //    ourtestbed[i].lnumdiag));
+      //  printf(" denum %f\n", (MEGAHERTZ * ourtestbed[i].testlen));
         printf("%f - ", (FLPT)((1.0 * TLPERS * imatsize * inoreps * 
-            ourtestbed[i].lnumdiag)/(1000000.0 * ourtestbed[i].testlen)));
+            ourtestbed[i].lnumdiag)/(MEGAHERTZ * ourtestbed[i].testlen)));
     }
     printf("%d\n", imatsize);
     
 /* The last state is to free up all the memory used. */
     
-    free(dvector);
+    free(didentvector);
     free(dvectout);    
     for (i = 0; i < inotests; i++)
     {
-        free(ourtestbed[i].dret);
-        destroy_ucds(ourtestbed[i].ourucds);
+        mmdestroy(&(ourtestbed[i]));
     }
     return 0;
 }
