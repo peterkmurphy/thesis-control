@@ -1,0 +1,48 @@
+#!/bin/bash
+#A sample script to run runtestit.py
+#This is set up to use 8 threads on one cpus
+#Originally by David Green UQ HPC
+#Now by Peter Murphy
+
+#When you qsub this script you use the command
+#qsub runtestit.pbs
+
+#Let's send some email on completion of the task.
+
+#PBS -m abe
+
+#Now, who should the mail be sent to? 
+
+#PBS -M peterkmurphy@gmail.com
+
+
+#The workq is default queue but it is good to state it nonetheless
+#PBS -q workq  
+
+#MUST HAVE
+#Walltime 
+#PBS -l walltime=168:00:00 
+
+#MUST HAVE
+#Replace the following with a valid account string for you 
+#PBS -A s3302780
+
+#You need to ask PBS for an appropriate set of resources
+#Ask for 1 chunk with 8 cpu and 20GB of mem 
+##PBS -l select=1:ncpus=1:NodeType=medium:ompthreads=8:mem=20GB
+#
+#
+#See PBS user guide and NodesInfo script for details
+
+#PBS -N runtestit
+#PBS -j oe
+
+#You won't get 8 threads running without setting the OMP_NUM_THREADS
+#Best done using the select above
+#otherwise you need to set the value using this
+export OMP_NUM_THREADS=8
+
+#Now put your shared memory program launcher below here
+
+run-escript -t 8 runtestit.py
+
