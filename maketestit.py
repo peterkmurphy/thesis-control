@@ -8,10 +8,6 @@
 import subprocess;
 from commoncompile import *
 
-# Now we add a subdirectory for executables to be created in.
-
-TESTDIRCREATE = "test/"
-
 make_sure_path_exists(TESTDIRCREATE);
 
 # Now we build the compile options.
@@ -37,27 +33,4 @@ for eff in EFF_OPTIONS:
                 ourseq.extend(["ucds.c", "projcommon.c", "testucds.c", "-o"]);
                 ourseq.extend([TESTDIRCREATE + ourexecute + eff, "-lrt", "-lm"]);
                 x = subprocess.call(ourseq);
-
-
-
-
-#for eff in EFF_OPTIONS:
-#    EFF_OP = "-O" + eff;
-#    for ismp in [True, False]:
-#        for isunroll in [True, False]:
-#            if ismp and not isunroll:
-#                x = subprocess.call(["gcc", "-Wall", "-Wno-unknown-pragmas", OPENMPOP, EFF_OP, "ucds.c", "projcommon.c",
-#                    "testucds.c", "-o", DIRCREATE + "mptucds" + eff, "-lrt", "-lm"]);
-#            elif (not ismp) and (not isunroll):
-#                x = subprocess.call(["gcc", "-Wall", "-Wno-unknown-pragmas", EFF_OP, "ucds.c", "projcommon.c",
-#                    "testucds.c", "-o", DIRCREATE + "tucds" + eff, "-lrt", "-lm"]);
-#            elif ismp and isunroll:
-#                x = subprocess.call(["gcc", "-Wall", "-Wno-unknown-pragmas", OPENMPOP, EFF_OP, LOOPUNROLL, "ucds.c", "projcommon.c",
-#                    "testucds.c", "-o", DIRCREATE + "mpurtucds" + eff, "-lrt", "-lm"]);                
-#            else:    
-#                x = subprocess.call(["gcc", "-Wall", "-Wno-unknown-pragmas", EFF_OP, LOOPUNROLL, "ucds.c", "projcommon.c",
-#                    "testucds.c", "-o", DIRCREATE + "urtucds" + eff, "-lrt", "-lm"]);                
-
-                
-                
 

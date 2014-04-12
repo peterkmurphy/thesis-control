@@ -7,15 +7,7 @@
 
 import sys;
 import subprocess;
-
-# This matches gcc optimization arguments with the resulting file name.
-# First, we list the efficiency suffixes
-
-EFF_OPTIONS = ["0", "1", "2", "3", "fast"];
-
-# Then we state OpenMP prefixes.
-
-OPENMP_OPTIONS = ["", "d", "mp", "dmp", "ur", "dur", "mpur", "dmpur"];
+from commoncompile import *
 
 # These set the ranges to try out. 
 
@@ -32,7 +24,7 @@ else:
 
 for k in EFF_OPTIONS:
     for j in OPENMP_OPTIONS:
-        ourFile = "./" + j + "ucds" + k; 
+        ourFile = "./" + TIMEDIRCREATE + j + "ucds" + k; 
         i = MINMATSIZE; # The minimum iteration amount
         print ourFile;
         while i <= MAXMATSIZE:

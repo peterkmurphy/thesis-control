@@ -9,8 +9,6 @@
 import subprocess;
 from commoncompile import *
 
-TIMEDIRCREATE = "timeucds/"
-
 make_sure_path_exists(TIMEDIRCREATE);
 
 # Now we build the compile options.

@@ -9,11 +9,7 @@ from commoncompile import *
 
 # Now we add a subdirectory for executables to be created in.
 
-DIRCGCREATE = "timecg/"
-
-make_sure_path_exists(DIRCGCREATE);
-
-# Now we build the compile options.
+make_sure_path_exists(CGDIRCREATE);
 
 # Now we build the compile options.
 
@@ -36,28 +32,6 @@ for eff in EFF_OPTIONS:
                     ourexecute += "ur";
                 ourexecute += "ucdscg";
                 ourseq.extend(["ucds.c", "projcommon.c", "runconjgrad.c", "-o"]);
-                ourseq.extend([DIRCGCREATE + ourexecute + eff, "-lrt", "-lm"]);
+                ourseq.extend([CGDIRCREATE + ourexecute + eff, "-lrt", "-lm"]);
                 x = subprocess.call(ourseq);
 
-
-
-
-
-
-#for eff in EFF_OPTIONS:
-#    EFF_OP = "-O" + eff;
-##    for ismp in [True, False]:
-  #      for isunroll in [True, False]:
-   #         if ismp and not isunroll:
-    #            x = subprocess.call(["gcc", "-Wall", "-Wno-unknown-pragmas", OPENMPOP, EFF_OP, "ucds.c", "projcommon.c",
-     #               "runconjgrad.c", "-o", DIRCREATE + "mpucdscg" + eff, "-lrt", "-lm"]);
-      #      elif (not ismp) and (not isunroll):
-       #         x = subprocess.call(["gcc", "-Wall", "-Wno-unknown-pragmas", EFF_OP, "ucds.c", "projcommon.c",
-        #            "runconjgrad.c", "-o", DIRCREATE + "ucdscg" + eff, "-lrt", "-lm"]);
-        #    elif ismp and isunroll:
-         #       x = subprocess.call(["gcc", "-Wall", "-Wno-unknown-pragmas", OPENMPOP, EFF_OP, LOOPUNROLL, "ucds.c", "projcommon.c",
-          #          "runconjgrad.c", "-o", DIRCREATE + "mpurucdscg" + eff, "-lrt", "-lm"]);                
-           # else:    
-            #    x = subprocess.call(["gcc", "-Wall", "-Wno-unknown-pragmas", EFF_OP, LOOPUNROLL, "ucds.c", "projcommon.c",
-             #       "runconjgrad.c", "-o", DIRCREATE + "urucdscg" + eff, "-lrt", "-lm"]);  
-             

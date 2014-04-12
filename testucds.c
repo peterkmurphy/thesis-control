@@ -329,7 +329,8 @@ int main(int argc, char *argv[])
              //   printf("Norm %f\n", dnorm);
                 if (dnorm > dmaxerror)
                 {
-                    printf("We have a problem!\n");                    
+                    printf("We have a problem with norm as %f and maxerror as %f!\n",
+                     dnorm, dmaxerror);                    
                 }
             }    
         } 

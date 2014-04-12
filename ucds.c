@@ -719,7 +719,7 @@ FLPT * dconjgrad(const ucds * ucdsa, const FLPT * dvectb, const FLPT *dvectx0,
     FLPT dnorm;
     
 /* Time to initialise. */
-
+    printf ("Begin CG.\n");
     dpvector = dassign(ivectorsize);
     dqvector = dassign(ivectorsize);
     dbetapproduct = dassign(ivectorsize);
@@ -763,9 +763,10 @@ FLPT * dconjgrad(const ucds * ucdsa, const FLPT * dvectb, const FLPT *dvectx0,
   //      printvector("drvector", ivectorsize, drvectors[icount % 2]);
 //        dscalarprod (ivectorsize, alpha, dqvector, dnormvector);
         dnorm = dvectnorm (ivectorsize, imode, drvectors[icount % 2]);
- //       printf("Norm: %f\n", alpha);
+  //      printf("Alpha: %f; Norm; %f; Rho %f\n", alpha, dnorm, rhos[(icount - 1) % 2]);
         if (dnorm < derror)
         {
+            printf("Beta: %f; Norm; %f; Rho %f, %f\n", beta, dnorm, rhos[(icount - 1) % 2], rhos[(icount) % 2]);
             free(dpvector);
             free(dqvector);
             free(dbetapproduct);
@@ -776,6 +777,7 @@ FLPT * dconjgrad(const ucds * ucdsa, const FLPT * dvectb, const FLPT *dvectx0,
             {
                 *inoiter = icount;
             }
+            printf ("End CG.\n");
             return dvectx;
         }
         icount = icount + 1;

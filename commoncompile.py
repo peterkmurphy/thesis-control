@@ -31,3 +31,25 @@ def make_sure_path_exists(path):
     except OSError as exception:
         if exception.errno != errno.EEXIST:
             raise
+
+# These OpenMP prefixes are used for running the program.
+
+OPENMP_OPTIONS = ["", "d", "mp", "dmp", "ur", "dur", "mpur", "dmpur"];
+
+# These constants are used for subdirectories where executables are created.
+
+# Used for making different versions of testucds.c (a program
+# that tests Ultra Compressed Diagonal Storage, Conjugate Gradient and other
+# routines for correctness)
+
+TESTDIRCREATE = "test/"
+
+# This directory is for testing the time of the conjugate gradient.
+
+CGDIRCREATE = "timecg/"
+
+# This is for timing UCDS multiplication.
+
+TIMEDIRCREATE = "timeucds/"
+
+
