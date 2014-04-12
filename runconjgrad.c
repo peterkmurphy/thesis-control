@@ -4,6 +4,7 @@
 // Written by Peter Murphy. (c) 2013
 */
 
+#include "projcommon.h"
 #include "ucds.h"
 
 
@@ -77,7 +78,7 @@ int main(int argc, char *argv[])
      
     mmtestbed ourtestbed[inotests];
     INTG iminisize = (imatsize * 2) - 1; /* Number of diagonals. */
-    INTG imaxiter;
+//    INTG imaxiter;
     INTG immindices[20] = {5, 5, 5, 5, 5, 5, 9, 9, 15, 15, 27, 27, 27, 27, 27, 27, 
         45, 45, 81, 81};
     for (i = 0; i < inotests; i++)

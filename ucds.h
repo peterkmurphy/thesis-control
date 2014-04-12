@@ -1,6 +1,6 @@
 /* 
 // ucds.h. Header for Ultra Compressed Diagonal Storage.
-// Written by Peter Murphy. (c) 2013
+// Written by Peter Murphy. (c) 2013, 2014
 */
 
 #include <math.h>
@@ -8,36 +8,11 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <time.h>
+#include "projcommon.h"
 #include <omp.h>
 
 #ifndef UCDS_H
 #define UCDS_H
-
-/* Quick and dirty min and max. */
-
-#define max(x, y) (((x) > (y)) ? (x) : (y))
-#define min(x, y) (((x) < (y)) ? (x) : (y))
-
-/* 
-// We use typedefs for integers and floating point numbers so their size
-// and base types can be changed in one place.
-*/
-
-typedef int INTG;
-
-typedef double FLPT;
-
-/* We use a typedef for storing time lengths. */
-
-typedef uint64_t TLEN;
-
-/* And timelengths per second. On Linux, it is 10^9 for nanoseconds. */
-
-#define TLPERS 1000000000
-
-/* But values will be displayed in Megahertz, so we need to divide. */
-
-#define MEGAHERTZ 1000000.0
 
 /* Useful for defining number of diagonals in matrices. */
 
@@ -58,16 +33,6 @@ typedef uint64_t TLEN;
 #define MINDIAGT27 14
 
 /* The following are definitions for vector related routines. */
-
-/* 
-// The dassign function assigns memory for a FLPT vector. The argument:
-// - isize: the number of elements in the vector.
-// The return value is the vector.
-// Note: the space for the vector should be deallocated after use using
-// the free function or similar. 
-*/
-
-FLPT * dassign(const INTG isize);
 
 /*
 // The dsetvector routine creates and initialises a vector, so that
@@ -435,24 +400,6 @@ mmtestbed * mmsetup(INTG lnumdiag, INTG ivectsize, mmtestbed * mmref);
 
 void mmdestroy(mmtestbed * mmref);
     
-/*
-// The timespecDiff routine gives the differences in nanoseconds between
-// two events ptime1 (the end) and ptime2 (the start).
-*/
-
-TLEN timespecDiff(struct timespec *ptime1, struct timespec *ptime2);
-
-/*
-// The printvector function prints a vector to standard output. The
-// arguments:
-// name: the name of the variable represented.
-// isize: the size of the vector.
-// dvector: the vector.
-// The function returns no arguments.
-*/
-
-void printvector(const char* name, INTG isize, const FLPT* dvector);
-
 /*
 // The printucds function prints an ucds instance to standard output. */
 

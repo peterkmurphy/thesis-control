@@ -1,6 +1,6 @@
 /* 
 // ucds.c. Implementation of Ultra Compressed Diagonal Storage.
-// Written by Peter Murphy. (c) 2013
+// Written by Peter Murphy. (c) 2013, 2014
 */
 
 #include <math.h>
@@ -9,14 +9,10 @@
 #include <stdint.h>
 #include <time.h>
 #include <omp.h>
+#include "projcommon.h"
 #include "ucds.h"
 
 /* Function implementations. */
-
-FLPT * dassign(const INTG isize)
-{
-    return (FLPT *)malloc(isize * sizeof(FLPT));
-}
 
 FLPT * dsetvector(const INTG isize, const FLPT dvalue)
 {
@@ -215,7 +211,7 @@ FLPT daltnorm (const INTG lvectsize, const INTG mode,
     INTG lremd = lvectsize - lhalf;
     FLPT fbr1;
     FLPT fbr2;
-    FLPT * dsndptr = &(dvectin[lhalf]);
+    FLPT * dsndptr = (FLPT *) &(dvectin[lhalf]);
     #pragma omp parallel sections
     {
         #pragma omp section
@@ -691,47 +687,6 @@ FLPT * multiply_ucdsaltd5(const ucds *ourucds, const FLPT *dvector, FLPT * dret)
     }
     return dret; 
 }
-
-
-
-/*
-// The following routine is adapted from the following Stack Overflow
-// article: http://stackoverflow.com/questions/361363/ \
-// how-to-measure-time-in-milliseconds-using-ansi-c 
-//
-// It gives the differences in nanoseconds between two events
-*/
-
-TLEN timespecDiff(struct timespec *ptime1, struct timespec *ptime2)
-{
-    const int NSPERS = TLPERS; /* Nanoseconds per seconds. */
-    return ((ptime1->tv_sec * NSPERS) + ptime1->tv_nsec) -
-           ((ptime2->tv_sec * NSPERS) + ptime2->tv_nsec);
-}
-
-void printvector(const char* name, INTG isize, const FLPT* dvector)
-{
-    printf("%s: [", name);
-    INTG i;
-    for (i = 0; i < (isize - 1); i++)
-    {
-        printf("%f, ", dvector[i]);
-    }
-    printf("%f]\n", dvector[isize - 1]);
-}
-
-void printintvector(const char* name, INTG isize, const INTG* dvector)
-{
-    printf("%s: [", name);
-    INTG i;
-    for (i = 0; i < (isize - 1); i++)
-    {
-        printf("%d, ", dvector[i]);
-    }
-    printf("%d]\n", dvector[isize - 1]);
-}
-
-
 
 void printucds(const char * name, ucds * ourucds)
 {

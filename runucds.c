@@ -6,6 +6,7 @@
 // Written by Peter Murphy. (c) 2013
 */
 
+#include "projcommon.h"
 #include "ucds.h"
 
 int main(int argc, char *argv[])
@@ -277,5 +278,6 @@ int main(int argc, char *argv[])
     {
         mmdestroy(&(ourtestbed[i]));
     }
+    (void)ddummy; // To disable warning: variable 'ddummy' set but not used/
     return 0;
 }
