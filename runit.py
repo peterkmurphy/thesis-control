@@ -15,7 +15,7 @@ EFF_OPTIONS = ["0", "1", "2", "3", "fast"];
 
 # Then we state OpenMP prefixes.
 
-OPENMP_OPTIONS = ["", "mp", "ur", "mpur"];
+OPENMP_OPTIONS = ["", "d", "mp", "dmp", "ur", "dur", "mpur", "dmpur"];
 
 # These set the ranges to try out. 
 
@@ -25,7 +25,7 @@ if len(sys.argv) >= 3:
     NOITERS = str(int(sys.argv[3]));
 else:
     MINMATSIZE = 16384;
-    MAXMATSIZE = 2097152;
+    MAXMATSIZE = 16384 # 2097152;
     NOITERS = "100";
 
 # Now we try out the executables.
