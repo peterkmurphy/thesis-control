@@ -124,6 +124,6 @@ void printintvector(const char* name, INTG isize, const INTG* ivector)
         printf("%d, ", ivector[i]);
     }
     printf("%d]\n", ivector[isize - 1]);
-}
+} 
 
 

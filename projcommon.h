@@ -30,8 +30,10 @@ typedef int INTG;
 
 #ifdef BIGFLOAT
     typedef double FLPT;
+    #define FLPTSTR "double"
 #else
     typedef float FLPT;
+    #define FLPTSTR "float"
 #endif
 
 /* We use a typedef for storing time lengths. */
@@ -106,4 +108,4 @@ void printvector(const char* name, INTG isize, const FLPT* dvector);
 
 void printintvector(const char* name, INTG isize, const INTG* ivector);
 
-#endif // PROJCOMMON_H
+#endif // PROJCOMMON_H 
