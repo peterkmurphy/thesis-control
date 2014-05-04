@@ -112,6 +112,26 @@ FLPT * dscalarprod (const INTG lvectsize, const FLPT dscalar,
     const FLPT * dvectin, FLPT * dvectout);
 
 /*
+// The saxpy function performs dvectout[i] = dvectx[i] + (dinputa * dvecty[i]);
+// for i in {0... lvectsize - 1}. The function returns dvectout.
+*/
+
+
+FLPT * dsaxpy (const INTG lvectsize, const FLPT dinputa, 
+    const FLPT * dvectx, const FLPT * dvecty, FLPT * dvectout);
+
+
+/*
+// The truesaxpy function performs dvecty[i] = (dinputa * dvectx[i]) + (dinputb * dvecty[i]);
+// for i in {0... lvectsize - 1}. The function returns dvecty.
+*/
+
+
+FLPT * dtruesaxpy (const INTG lvectsize, const FLPT dinputa, 
+    const FLPT * dvectx, const FLPT dinputb, FLPT * dvecty);
+
+
+/*
 // The vector sum adds two vectors and returns the result. The arguments:
 // - lvecsize: the size of the vector arguments;
 // - dleftvec: the vector on the left hand side of the argument.

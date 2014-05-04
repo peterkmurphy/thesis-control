@@ -25,6 +25,10 @@ OPENMPOP = "-fopenmp";
 
 LOOPUNROLL = "-funroll-loops"
 
+# This is for common OpenCL Lib stuff.
+
+OPENCLLIB = ["-I", "/opt/AMDAPP/include/", "-L", "/opt/AMDAPP/lib/x86_64", "-l", "OpenCL", "-lm" ];
+
 def make_sure_path_exists(path):
     try:
         os.makedirs(path)
@@ -51,5 +55,20 @@ CGDIRCREATE = "timecg/"
 # This is for timing UCDS multiplication.
 
 TIMEDIRCREATE = "timeucds/"
+
+# This is for timing the saxpy process.
+
+TIMESAXPYCLCREATE = "timesaxpy/"
+
+# This is for timing the dotproduct process.
+
+TIMEDOTPRODUCTCLCREATE = "dotproductcl/"
+
+# This is for timing the diagonal matrix multiplications. 
+
+TDIAGMATRIXCLCREATE = "diagmatrixcl/"
+
+
+
 
 

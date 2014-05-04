@@ -15,14 +15,14 @@ if len(sys.argv) >= 4:
     MAXMATSIZE = int(sys.argv[2]);
     NOITERS = str(int(sys.argv[3]));
 else:
-    MINMATSIZE = 2;
-    MAXMATSIZE = 128;
+    MINMATSIZE = 64;
+    MAXMATSIZE = 65536;
     NOITERS = "1";
 
 # Now we try out the executables.
 
 for k in EFF_OPTIONS:
-    for j in OPENMP_OPTIONS:
+    for j in ["d", "dmp", "dur", "dmpur"]: #OPENMP_OPTIONS:
         ourFile = "./" + TESTDIRCREATE + j + "tucds" + k; 
         i = MINMATSIZE; # The minimum iteration amount
         print ourFile;

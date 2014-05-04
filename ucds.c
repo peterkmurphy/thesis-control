@@ -111,6 +111,42 @@ FLPT * dscalarprod (const INTG lvectsize, const FLPT dscalar,
     return dvectout;
 }
 
+
+FLPT * dsaxpy (const INTG lvectsize, const FLPT dinputa, 
+    const FLPT * dvectx, const FLPT * dvecty, FLPT * dvectout)
+{
+    INTG i; /* An iteration variable. */
+    #pragma omp parallel for
+    for (i = 0; i < lvectsize; i++)
+    {
+        dvectout[i] = dvectx[i] + (dinputa * dvecty[i]);
+    }
+    return dvectout;
+}
+
+/*
+// The truesaxpy function performs dvecty[i] = (dinputa * dvectx[i]) + (dinputb * dvecty[i]);
+// for i in {0... lvectsize - 1}. The function returns dvecty.
+*/
+
+
+FLPT * dtruesaxpy (const INTG lvectsize, const FLPT dinputa, 
+    const FLPT * dvectx, const FLPT dinputb, FLPT * dvecty)
+{
+    INTG i; /* An iteration variable. */
+    #pragma omp parallel for
+    for (i = 0; i < lvectsize; i++)
+    {
+        dvecty[i] = (dinputa * dvectx[i]) + (dinputb * dvecty[i]);
+    }
+    return dvecty;
+}
+
+
+
+
+
+
 FLPT * dvectadd (const INTG lvectsize, const FLPT * dleftvec, 
     const FLPT * drightvec, FLPT * dvectout)
 {
@@ -702,88 +738,145 @@ void printucds(const char * name, ucds * ourucds)
 // The following implementation is from 5.1, p.42 of Henk A. van der Vorst,
 // "Iterative Krylov Methods for Large Linear Systems".
 */
-
+/*
 FLPT * dconjgrad(const ucds * ucdsa, const FLPT * dvectb, const FLPT *dvectx0,
     FLPT * dvectx, fpmult fpucdsmult, fpnorm fpdnorm, 
     INTG imode, const FLPT derror, INTG * inoiter)
 {
-    FLPT alpha, beta; /* Variables used in the equation. */
-    INTG icount = 1; /* The iteration count. */
-    INTG ivectorsize = ucdsa->lmatsize; /* The size of matrices and vectors. */
+    FLPT alpha, beta = 0; // Variables used in the equation. 
+    INTG icount = 1; // The iteration count. 
+    INTG ivectorsize = ucdsa->lmatsize; // The size of matrices and vectors. 
+    INTG isquareroot = floor(sqrt(ivectorsize * 1.0));
     FLPT * dpvector;
     FLPT * dqvector;
     FLPT * dbetapproduct;
-    FLPT * drvectors[2]; /* Needed for r_even and r_odd storage. */
-//    FLPT * dnormvector;
-    FLPT rhos[2] = {1.0, 1.0}; /* Needed for the rhos. */
+    FLPT * drvectors[2]; // Needed for r_even and r_odd storage. 
+    FLPT rhos[2] = {1.0, 1.0}; // Needed for the rhos. 
     FLPT dnorm;
+    FLPT * derrorcorrect;
     
-/* Time to initialise. */
-    printf ("Begin CG.\n");
+// Time to initialise. 
     dpvector = dassign(ivectorsize);
     dqvector = dassign(ivectorsize);
     dbetapproduct = dassign(ivectorsize);
     drvectors[0] = dassign(ivectorsize);
     drvectors[1] = dassign(ivectorsize);
- //   dnormvector = dassign(ivectorsize);
-    
+    derrorcorrect = dassign(ivectorsize);
     doverwritevector(ivectorsize, 0.0, dvectx);
-//    printvector("dvectorb", ivectorsize, dvectb);
- //   printvector("dvectx", ivectorsize, dvectx);
     fpucdsmult(ucdsa, dvectx0, dqvector);
-  //  printvector("dqvector", ivectorsize, dqvector);
     dvectsub (ivectorsize, dvectb, dqvector, drvectors[0]);
-  //  printvector("dr0vector", ivectorsize, drvectors[0]);
+    FLPT delta0 = dselfdprod(ivectorsize, drvectors[0]);
     while(1)
     {
         rhos[(icount - 1) % 2] = dselfdprod(ivectorsize, drvectors[(icount - 1) % 2]);
-  //      printf("rho%d is %f\n", (icount - 1), rhos[(icount - 1) % 2]);
         if (icount == 1)
         {
             dveccopy(ivectorsize, dpvector, drvectors[(icount - 1) % 2]);
-  //          printvector("dpvector", ivectorsize, dpvector);
         }
         else
         {
             beta = rhos[(icount - 1) % 2]/rhos[icount % 2];
-   //         printf("Beta: %f\n", beta);
             dscalarprod (ivectorsize, beta, dpvector, dbetapproduct);
             dvectadd (ivectorsize, drvectors[(icount - 1) % 2], dbetapproduct, dpvector);
             dveccopy(ivectorsize, dpvector, drvectors[(icount - 1) % 2]);
-  //          printvector("dpvector", ivectorsize, dpvector);
         }
         fpucdsmult(ucdsa, dpvector, dqvector);
- //       printvector("dqvector", ivectorsize, dqvector);
         alpha = rhos[(icount - 1) % 2]/ddotprod(ivectorsize, dpvector, dqvector); 
- //       printf("Alpha: %f\n", alpha);
         daddinsitu (ivectorsize, dvectx, alpha, dpvector);
-  //      printvector("dxvector", ivectorsize, dvectx);
-        daddtwosums (ivectorsize, drvectors[icount % 2], drvectors[(icount - 1) % 2],
-            1.0, dqvector, -1.0 * alpha);
-  //      printvector("drvector", ivectorsize, drvectors[icount % 2]);
-//        dscalarprod (ivectorsize, alpha, dqvector, dnormvector);
-        dnorm = dvectnorm (ivectorsize, imode, drvectors[icount % 2]);
-  //      printf("Alpha: %f; Norm; %f; Rho %f\n", alpha, dnorm, rhos[(icount - 1) % 2]);
-        if (dnorm < derror)
+        if ((icount % isquareroot) == 0)
         {
-            printf("Beta: %f; Norm; %f; Rho %f, %f\n", beta, dnorm, rhos[(icount - 1) % 2], rhos[(icount) % 2]);
+            fpucdsmult(ucdsa, dvectx, derrorcorrect);
+            daddtwosums (ivectorsize, drvectors[icount % 2], dvectb,
+                1.0, derrorcorrect, -1.0);            
+        }
+        else
+        {
+            daddtwosums (ivectorsize, drvectors[icount % 2], drvectors[(icount - 1) % 2],
+                1.0, dqvector, -1.0 * alpha);
+        }
+        dnorm = dvectnorm (ivectorsize, imode, drvectors[icount % 2]);
+        if (dnorm < (derror)) // ?
+        {
+            printf("Delta0: %f; Delta0e2: %f; Norm; %f; Rho %f, %f\n", delta0, delta0 * derror * derror,
+                dnorm, rhos[(icount - 1) % 2], rhos[(icount) % 2]);
             free(dpvector);
             free(dqvector);
             free(dbetapproduct);
             free(drvectors[0]);
             free(drvectors[1]);
- //           free(dnormvector);
+            free(derrorcorrect);
             if (inoiter != NULL)
             {
                 *inoiter = icount;
             }
-            printf ("End CG.\n");
             return dvectx;
         }
         icount = icount + 1;
     }
 }
+
+*/
+
+// This is from painless conjugate gradient
+
+FLPT * dconjgrad(const ucds * ucdsa, const FLPT * dvectb, const FLPT *dvectx0,
+    FLPT * dvectx, fpmult fpucdsmult, fpnorm fpdnorm, 
+    INTG imode, const FLPT derror, INTG * inoiter)
+{
+    FLPT alpha, beta = 0; // Variables used in the equation.
+    FLPT deltanew, deltaold, delta0 = 0;    
+    INTG icount = 0; // The iteration count. :
+    INTG ivectorsize = ucdsa->lmatsize; // The size of matrices and vectors. 
+    INTG isquareroot = floor(sqrt(ivectorsize * 1.0)); // The square root of the size.
+    FLPT * dqvector = dassign(ivectorsize);
+    FLPT * drvector = dassign(ivectorsize);
+    FLPT * ddvector = dassign(ivectorsize);
+    FLPT * dbandaproduct = dassign(ivectorsize);
+    fpucdsmult(ucdsa, dvectx0, dbandaproduct); // bandvector = Ax.
+    dvectsub (ivectorsize, dvectb, dbandaproduct, drvector); // r = b - Ax
+    dveccopy (ivectorsize, ddvector, drvector); // d = r
+    dveccopy (ivectorsize, dvectx, dvectx0); // x = x0
+    deltanew = dselfdprod(ivectorsize, drvector); //deltanew = rTr
+    delta0 = deltanew; // delta0 = deltanew
+    printf("Start loop:\n");
+    while((deltanew > derror) || (deltanew > (derror * derror * derror * derror * delta0))) // deltanew > e2delta0 
+    {
+  //      printf("Delta0: %f; Deltanew: %f; error; %f\n", delta0, deltanew, derror);
+        fpucdsmult(ucdsa, ddvector, dqvector); // q = Ad.
+        alpha = deltanew / ddotprod (ivectorsize, ddvector, dqvector); // alpha = deltanew / dTq
+        dtruesaxpy (ivectorsize, alpha, ddvector, 1.0, dvectx); // x = x + alpha.d
+        if ((icount % isquareroot) == 0)
+        {
+            fpucdsmult(ucdsa, dvectx, dbandaproduct); // bandvector = Ax.
+            dvectsub (ivectorsize, dvectb, dbandaproduct, drvector); // r = b - Ax           
+        }
+        else
+        {
+            dtruesaxpy (ivectorsize, -1.0 * alpha, dqvector, 1.0, drvector); // r = r - alpha.q
+        }        
         
+        deltaold = deltanew;
+        deltanew = dselfdprod(ivectorsize, drvector); //deltanew = rTr
+        beta = deltanew / deltaold;
+        dtruesaxpy (ivectorsize, 1.0, drvector, beta, ddvector); // d = r + beta.d
+        icount = icount + 1;
+  //      printf("alpha: %f; beta: %f\n", alpha, beta);
+        if (icount > ivectorsize)
+        {
+            break;
+        }
+    }
+    free(drvector);
+    free(dqvector);
+    free(ddvector);
+    free(dbandaproduct);
+    if (inoiter != NULL)
+    {
+        *inoiter = icount;
+    }
+    return dvectx;
+
+}
     
     
     

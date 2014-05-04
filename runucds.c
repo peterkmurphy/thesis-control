@@ -54,6 +54,7 @@ int main(int argc, char *argv[])
     INTG i, j;
     struct timespec start, end;
     FLPT * didentvector = dsetvector(imatsize, 1.0); /* Has equal values. */
+    SetFIncrease(imatsize, didentvector); // 
     FLPT * dvectout = dsetvector(imatsize, 0.0);
     if (didentvector == NULL)
     {
@@ -142,7 +143,7 @@ int main(int argc, char *argv[])
 // What we now do is time the subsidiary operations created for
 // the conjugate gradient operation.
 */
-    
+    FLPT tsaxpy;
     FLPT tdotprod;
     FLPT tscalprod;
     FLPT tvectadd;
@@ -163,12 +164,23 @@ int main(int argc, char *argv[])
     clock_gettime(CLOCK_MONOTONIC, &start); 
     for (j = 0; j < inoreps; j++)
     {
+        dvectout = dsaxpy (imatsize, 2.0, didentvector, didentvector, dvectout);
+    } 
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    tsaxpy = (1.0 * TLPERS * inoreps * imatsize) /
+        (MEGAHERTZ * timespecDiff(&end, &start)); 
+
+    clock_gettime(CLOCK_MONOTONIC, &start); 
+    for (j = 0; j < inoreps; j++)
+    {
         ddummy = ddotprod (imatsize, didentvector, didentvector);
     } 
     clock_gettime(CLOCK_MONOTONIC, &end);
     tdotprod = (1.0 * TLPERS * inoreps * imatsize) /
-        (MEGAHERTZ * timespecDiff(&end, &start)); 
-
+        (MEGAHERTZ * timespecDiff(&end, &start));     
+    
+    
+    
     
     clock_gettime(CLOCK_MONOTONIC, &start); 
     for (j = 0; j < inoreps; j++)
@@ -256,7 +268,7 @@ int main(int argc, char *argv[])
 
 /* Then we print the tests. */    
 
-    printf("%f, %f, %f, %f, %f, %f, %f, %f, %f, %f; ", tdotprod, tscalprod, tvectadd,
+    printf("%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f; ", tsaxpy, tdotprod, tscalprod, tvectadd,
         tvectsub, tnorm1, tnorm2, tnorminf, taltnorm1, taltnorm2, taltnorminf);
     
     

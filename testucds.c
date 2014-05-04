@@ -75,10 +75,6 @@ INTG btestmult(const INTG ivectsize, const ucds * ucdsa, const INTG inoreps)
         multiply_ucds(ucdsa, dvectorb, dmultresult);
         multiply_ucdsalt(ucdsa, dvectorb, daltmultresult);
         dvectsub (ivectsize, dmultresult, daltmultresult, ddifference);
- //       printvector("dvectorb", ivectsize, dvectorb);
- //       printvector("dmultresult", ivectsize, dmultresult);
- //       printvector("daltmultresult", ivectsize, daltmultresult);
- //       printvector("ddifference", ivectsize, ddifference);
         for (j = 0; j < 3; j++)
         {
             dnorm = dvectnorm(ivectsize, j, ddifference);
@@ -86,13 +82,11 @@ INTG btestmult(const INTG ivectsize, const ucds * ucdsa, const INTG inoreps)
             {
                 ifailurecount++;
             }
- //           printf("The norm is %f.\n", dnorm); 
             dnorm = daltnorm(ivectsize, j, ddifference);
             if (dnorm > 0.1)
             {
                 ifailurecount++;
             }
- //           printf("The norm is %f.\n", dnorm);
         }
     }
     free(dvectorb);
@@ -111,7 +105,7 @@ INTG btestmult(const INTG ivectsize, const ucds * ucdsa, const INTG inoreps)
 INTG btestconggrad(const INTG ivectsize, const ucds * ucdsa, 
     const FLPT dminerror, const INTG inoreps)
 {
-    FLPT * dvect0 = dsetvector(ivectsize, 0.0); /* Starting vector. */
+    FLPT * dvect0 = dsetvector(ivectsize, 1.0); /* Starting vector. */
     FLPT * dconjresult = dassign(ivectsize); /* The result of conj. grad. */
     FLPT * dmultresult = dassign(ivectsize); /* Multiply above with ucdsa. */
     FLPT * ddifference = dassign(ivectsize); /* The difference between them. */
@@ -135,16 +129,13 @@ INTG btestconggrad(const INTG ivectsize, const ucds * ucdsa,
             doverwriterandom(ivectsize, dvectorb);
             for (k = 0; k < 2; k++) /* Over multiplication functions. */
             {
-    //            printvector("dvectorb", ivectsize, dvectorb);
                 icount = 0;
                 ifailurecount = 0;
-    //            printf("Mode %d-%d-%d: ", i, j, k);
                 for (l = 0; l < inoreps; l++)
                 {
                     dconjgrad(ucdsa, dvectorb, dvect0, dconjresult,
                         fpmultfuns[k], fpnormfuns[j], i, 
                         dminerror, &istore);
-            //        printvector("dconjresult", ivectsize, dconjresult);
                     if (istore > icount)
                     {   
                         icount = istore;
@@ -152,18 +143,22 @@ INTG btestconggrad(const INTG ivectsize, const ucds * ucdsa,
                     fpmultfuns[k](ucdsa, dconjresult, dmultresult);
                     dvectsub (ivectsize, dvectorb, dmultresult, ddifference);
                     dnorm = fpnormfuns[j](ivectsize, i, ddifference);
-            //        printvector("ddifference", ivectsize, ddifference);
                     if (dnorm > dminerror)
                     {
                         printf("This is dnorm: %f.\n", dnorm);
                         printf("Mode %d-%d-%d: ", i, j, k);
+                        printvector("dvectorb", ivectsize, dvectorb);
+                        printvector("dvect0", ivectsize, dvect0);
+                        printvector("dmultresult", ivectsize, dmultresult);                        
                         printvector("dconjresult", ivectsize, dconjresult);
                         printvector("ddifference", ivectsize, ddifference);
                         ifailurecount++;                    
                     }
+                    else
+                    {
+                         printf("Mode %d-%d-%d: succeeded.\n", i, j, k);
+                    }
                 }
-    //            printf("reps: %d, maxcount: %d; failures: %d\n", 
-    //                inoreps, icount, ifailurecount);
                 itotalfailures += ifailurecount;
             }
         }
@@ -199,7 +194,6 @@ int main(int argc, char *argv[])
         return(0);
     }
     const INTG imatsize = atoi(argv[1]);
-//    printf("We start it with a matrix size of %d!\n", imatsize);
     if (imatsize < iminmatsize)
     {
         printf("Please pass a matrix size greater or equal to %d.\n",
@@ -255,6 +249,7 @@ int main(int argc, char *argv[])
     FLPT *dzerovector = dsetvector(imatsize, 0.0); 
     FLPT * dmultvector = dsetvector(imatsize, 1.0);
     FLPT * ddifvector = dassign(imatsize);
+    FLPT * dresultvector = dassign(imatsize);
     FLPT dnorm;
     const FLPT dmaxerror = 0.001;
     const INTG inotests = 10;
@@ -273,14 +268,11 @@ int main(int argc, char *argv[])
      
     mmtestbed ourtestbed[inotests];
     INTG iminisize = (imatsize * 2) - 1; /* Number of diagonals. */
-//    printf("The maximum number of diagonals is %d\n", iminisize); 
     INTG immindices[10] = {5, 5, 5, 9, 15, 27, 27, 27, 45, 81};
     for (i = 0; i < inotests; i++)
     {
-    //    printf("Diag: %d\n", immindices[i]);
         if (immindices[i] <= iminisize)
         {
- //           printf("Diag: %d\n", immindices[i]);
             mmsetup(immindices[i], imatsize, &(ourtestbed[i]));
             if (i == 6)
             {
@@ -305,33 +297,41 @@ int main(int argc, char *argv[])
         }
     }        
     
-    
+//    printf("HHH\n");
+//    return(0);    
 /* Now we run the tests. */
-    
+    INTG inoerrors; 
     for (i = 0; i < inotests; i++)
     { 
-    //    printf ("%d\n", i);
         if (immindices[i] <= iminisize)
         {
-    //        printf ("%d\n", i);
             for (j = 0; j < inoreps; j++)
             {
-   //             printf("Diag Run: %d\n", immindices[i]);
-   //             printucds("Ourucds", ourtestbed[i].ourucds);
-                dconjgrad(ourtestbed[i].ourucds,
+                inoerrors = btestmult(imatsize, ourtestbed[i].ourucds, inoreps);
+                if (inoerrors != 0)
+                {
+                    printf("Multiplication errors: %d\n", inoerrors);
+                }
+                
+                
+                
+        /*        dconjgrad(ourtestbed[i].ourucds,
                     didentvector, dzerovector, ourtestbed[i].dret,
-                    ourtestbed[i].thefp, dvectnorm, 2, dmaxerror, &icount); /* &istore */
+                    ourtestbed[i].thefp, dvectnorm, 2, dmaxerror, &icount); // &istore 
                 ourtestbed[i].inoreps += icount;
-   //             printvector("dret", imatsize, ourtestbed[i].dret);
                 ourtestbed[i].thefp(ourtestbed[i].ourucds, ourtestbed[i].dret, dmultvector);
                 dvectsub (imatsize, didentvector, dmultvector, ddifvector);
                 dnorm = dvectnorm(imatsize, 2, ddifvector);
-             //   printf("Norm %f\n", dnorm);
                 if (dnorm > dmaxerror)
                 {
-                    printf("We have a problem with norm as %f and maxerror as %f!\n",
-                     dnorm, dmaxerror);                    
+                    printf("CG: we have a problem with test %d with norm as %f and maxerror as %f after %d iterations!\n",
+                     i, dnorm, dmaxerror, icount);                    
                 }
+                else
+                {
+           //         printf("CG succeeded with test %d with norm as %f and maxerror as %f after %d iterations!\n",
+           //          i, dnorm, dmaxerror, icount);                 
+                } */
             }    
         } 
     }
@@ -341,20 +341,46 @@ int main(int argc, char *argv[])
         srand (time(NULL));
         INTG tldiagindices[5] = {-3, -1, 0, 1, 3};
         FLPT tddiagvals[5] = {-1.0, -1.0, 4.0, -1.0, -1.0};
-        INTG inoerrors;        
+       
         ucds * ucdsa = mmatrix_ucds(imatsize, tldiagindices, tddiagvals, 3);
         inoerrors = btestmult(imatsize, ucdsa, inoreps);
         if (inoerrors != 0)
         {
             printf("Multiplication errors: %d\n", btestmult(imatsize, ucdsa, inoreps));
         }
-        inoerrors = btestconggrad(imatsize, ucdsa, 0.01, inoreps);
-        if (inoerrors != 0)
+        
+        dconjgrad(ucdsa, didentvector, dzerovector, dresultvector,
+                    &multiply_ucds, dvectnorm, 2, dmaxerror, &icount); /* &istore */
+        //        ourtestbed[i].inoreps += icount;
+        multiply_ucds(ucdsa, dresultvector, dmultvector);
+        dvectsub (imatsize, didentvector, dmultvector, ddifvector);
+        dnorm = dvectnorm(imatsize, 2, ddifvector);
+        if (dnorm > dmaxerror)
         {
-            printf("We had errors with a matrix size of %d!\n", imatsize);
+            printf("CG: we have a problem with test %d with norm as %f and maxerror as %f after %d iterations!\n",
+                 -1, dnorm, dmaxerror, icount);                    
         }
+        dconjgrad(ucdsa, didentvector, dzerovector, dresultvector,
+                    &multiply_ucdsalt, dvectnorm, 2, dmaxerror, &icount); /* &istore */
+        //        ourtestbed[i].inoreps += icount;
+        multiply_ucdsalt(ucdsa, dresultvector, dmultvector);
+        dvectsub (imatsize, didentvector, dmultvector, ddifvector);
+        dnorm = dvectnorm(imatsize, 2, ddifvector);
+        if (dnorm > dmaxerror)
+        {
+            printf("CG: we have a problem with test %d with norm as %f and maxerror as %f after %d iterations!\n",
+                 -2, dnorm, dmaxerror, icount);                    
+        }
+        
+        
+        
+      //  inoerrors = btestconggrad(imatsize, ucdsa, 0.001, inoreps);
+      //  if (inoerrors != 0)
+      //  {
+      //      printf("We had errors with a matrix size of %d!\n", imatsize);
+      //  }
         destroy_ucds(ucdsa);
-    }
+    } 
 
 /* The last state is to free up all the memory used. */
 
@@ -365,7 +391,6 @@ int main(int argc, char *argv[])
     {
         if (immindices[i] <= iminisize)
         {
- //           printf("Diag Free: %d\n", immindices[i]);
             mmdestroy(&(ourtestbed[i]));
         }
     }        
@@ -373,6 +398,7 @@ int main(int argc, char *argv[])
     free(dzerovector); 
     free(dmultvector);
     free(ddifvector);
+    free(dresultvector);
     printf("We made it with a matrix size of %d!\n", imatsize);
     return 0;
 }

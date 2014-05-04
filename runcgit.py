@@ -15,9 +15,9 @@ if len(sys.argv) >= 3:
     MAXMATSIZE = int(sys.argv[2]);
     NOITERS = str(int(sys.argv[3]));
 else:
-    MINMATSIZE = 16384;
-    MAXMATSIZE = 2097152;
-    NOITERS =  "100" 
+    MINMATSIZE = 64 #16384;
+    MAXMATSIZE = 64 #16384 # 2097152;
+    NOITERS =  "1" 
 
 # Now we try out the executables.
 
