@@ -86,12 +86,6 @@ char *szDotProduct =
 "            __global FLPT* fin, \n"\
 "            __global FLPT* fout, \n"\
 "            __local FLPT* ftemp, \n"\
-"            __global int* globalids, \n"\
-"            __global int* globalsizes, \n"\
-"            __global int* localids, \n"\
-"            __global int* localsizes, \n"\
-"            __global int* groupids, \n"\
-"            __global int* numgroups, \n"\
 "            __global FLPT* freduce){ \n"\
 " \n"\
 "  int global_index = get_global_id(0); \n"\
@@ -99,18 +93,10 @@ char *szDotProduct =
 "  int global_size = get_global_size(0); \n"\
 "  int local_size = get_local_size(0); \n"\
 "  int group_index = get_group_id(0); \n"\
-"  int num_groups = get_num_groups(0); \n"\
 "  if (global_index < length) { \n"\
 "  freduce[global_index] = 0.0; \n"\
-"  fout[global_index]= 0.0;  \n"\
 "  ftemp[local_index] = fin[global_index] * fin[global_index];  \n"\
 "  barrier(CLK_LOCAL_MEM_FENCE); \n"\
-"  globalids[global_index]=global_index;  \n"\
-"  globalsizes[global_index]=global_size;  \n"\
-"  localids[global_index]=local_index;  \n"\
-"  localsizes[global_index]=local_size;  \n"\
-"  groupids[global_index]=group_index;  \n"\
-"  numgroups[global_index]=num_groups; \n"\
 "  for(int offset = 1; \n"\
 "      offset < local_size; \n"\
 "      offset <<= 1) { \n"\
@@ -141,12 +127,6 @@ char *szReduce =
 "            __global FLPT* fin, \n"\
 "            __global FLPT* fout, \n"\
 "            __local FLPT* ftemp, \n"\
-"            __global int* globalids, \n"\
-"            __global int* globalsizes, \n"\
-"            __global int* localids, \n"\
-"            __global int* localsizes, \n"\
-"            __global int* groupids, \n"\
-"            __global int* numgroups, \n"\
 "            __global FLPT* freduce){ \n"\
 " \n"\
 "  int global_index = get_global_id(0); \n"\
@@ -154,18 +134,10 @@ char *szReduce =
 "  int global_size = get_global_size(0); \n"\
 "  int local_size = get_local_size(0); \n"\
 "  int group_index = get_group_id(0); \n"\
-"  int num_groups = get_num_groups(0); \n"\
 "  if (global_index < length) { \n"\
 "  freduce[global_index] = 0.0; \n"\
-"  fout[global_index]= 0.0;  \n"\
 "  ftemp[local_index] = fin[global_index]; \n"\
 "  barrier(CLK_LOCAL_MEM_FENCE); \n"\
-"  globalids[global_index]=global_index;  \n"\
-"  globalsizes[global_index]=global_size;  \n"\
-"  localids[global_index]=local_index;  \n"\
-"  localsizes[global_index]=local_size;  \n"\
-"  groupids[global_index]=group_index;  \n"\
-"  numgroups[global_index]=num_groups; \n"\
 "  for(int offset = 1; \n"\
 "      offset < local_size; \n"\
 "      offset <<= 1) { \n"\
@@ -291,26 +263,14 @@ int main(int argc, char *argv[])
     
     FLPT* outputDataF = (FLPT *) malloc(iGlobalSize * sizeof(FLPT));
     SetFNull(iGlobalSize, outputDataF);
-    int* outputDataGlID = (int *) malloc(iGlobalSize * sizeof(int));
-    SetNull(iGlobalSize, outputDataGlID);
-    int* outputDataGSize = (int *) malloc(iGlobalSize * sizeof(int));
-    SetNull(iGlobalSize, outputDataGSize);
-    int* outputDataLcID = (int *) malloc(iGlobalSize * sizeof(int));
-    SetNull(iGlobalSize, outputDataLcID);
-    int* outputDataLSize = (int *) malloc(iGlobalSize * sizeof(int));
-    SetNull(iGlobalSize, outputDataLSize);
-    int* outputDataGrID = (int *) malloc(iGlobalSize * sizeof(int));
-    SetNull(iGlobalSize, outputDataGrID);
-    int* outputDataNGSize = (int *) malloc(iGlobalSize * sizeof(int));
-    SetNull(iGlobalSize, outputDataNGSize);
-    
+   
 	struct timespec start[2];
 	struct timespec end[2];
     
 // create buffers for the input and ouput
 
     int err; 
-    cl_mem inputF, outputF, outputAll, outputGlID, outputGSize, outputLcID, outputLSize, outputGrID, outputNGSize;
+    cl_mem inputF, outputF, outputAll;
     inputF = clCreateBuffer(TheGCAQ->TheContext, CL_MEM_READ_ONLY, iGlobalSize * sizeof(FLPT), NULL, &err);
     if (err != CL_SUCCESS)
     {
@@ -319,53 +279,6 @@ int main(int argc, char *argv[])
     }
     
     
-    outputGlID = clCreateBuffer(TheGCAQ->TheContext, CL_MEM_WRITE_ONLY, iGlobalSize * sizeof(int), NULL, &err);
-    if (err != CL_SUCCESS)
-    {
-        printf("Error allocating for output 1");
-        return 4;
-    }
-
-
-    
-    outputGSize = clCreateBuffer(TheGCAQ->TheContext, CL_MEM_WRITE_ONLY, iGlobalSize * sizeof(int), NULL, &err);
-    if (err != CL_SUCCESS)
-    {
-        printf("Error allocating for output 2");
-        return 5;
-    }
-
-
-    
-    outputLcID = clCreateBuffer(TheGCAQ->TheContext, CL_MEM_WRITE_ONLY, iGlobalSize * sizeof(int), NULL, &err);
-    if (err != CL_SUCCESS)
-    {
-        printf("Error allocating for output 3");
-        return 6;
-    }
-
-    
-    outputLSize = clCreateBuffer(TheGCAQ->TheContext, CL_MEM_WRITE_ONLY, iGlobalSize * sizeof(int), NULL, &err);
-    if (err != CL_SUCCESS)
-    {
-        printf("Error allocating for output 4");
-        return 7;
-    }
-
-    
-    outputGrID = clCreateBuffer(TheGCAQ->TheContext, CL_MEM_WRITE_ONLY, iGlobalSize * sizeof(int), NULL, &err);
-    if (err != CL_SUCCESS)
-    {
-        printf("Error allocating for output 5");
-        return 8;
-    }
-
-    outputNGSize = clCreateBuffer(TheGCAQ->TheContext, CL_MEM_WRITE_ONLY, iGlobalSize * sizeof(int), NULL, &err);
-    if (err != CL_SUCCESS)
-    {
-        printf("Error allocating for output 6");
-        return 9;
-    }
     outputF = clCreateBuffer(TheGCAQ->TheContext, CL_MEM_WRITE_ONLY, iGlobalSize * sizeof(float), NULL, &err);
     if (err != CL_SUCCESS)
     {
@@ -395,24 +308,25 @@ int main(int argc, char *argv[])
     clSetKernelArg(TheGPAK->TheKernels[iKernel], 1, sizeof(cl_mem), &inputF);
     clSetKernelArg(TheGPAK->TheKernels[iKernel], 2, sizeof(cl_mem), &outputF);
     clSetKernelArg(TheGPAK->TheKernels[iKernel], 3, iLocalWorkSize * sizeof(float), NULL);
-    clSetKernelArg(TheGPAK->TheKernels[iKernel], 4, sizeof(cl_mem), &outputGlID);
-    clSetKernelArg(TheGPAK->TheKernels[iKernel], 5, sizeof(cl_mem), &outputGSize);
-    clSetKernelArg(TheGPAK->TheKernels[iKernel], 6, sizeof(cl_mem), &outputLcID);
-    clSetKernelArg(TheGPAK->TheKernels[iKernel], 7, sizeof(cl_mem), &outputLSize);
-    clSetKernelArg(TheGPAK->TheKernels[iKernel], 8, sizeof(cl_mem), &outputGrID);
-    clSetKernelArg(TheGPAK->TheKernels[iKernel], 9, sizeof(cl_mem), &outputNGSize);
-    clSetKernelArg(TheGPAK->TheKernels[iKernel], 10, sizeof(cl_mem), &outputAll);    
+    clSetKernelArg(TheGPAK->TheKernels[iKernel], 4, sizeof(cl_mem), &outputAll);         
+   // clSetKernelArg(TheGPAK->TheKernels[iKernel], 4, sizeof(cl_mem), &outputGlID);
+  //  clSetKernelArg(TheGPAK->TheKernels[iKernel], 5, sizeof(cl_mem), &outputGSize);
+  //  clSetKernelArg(TheGPAK->TheKernels[iKernel], 6, sizeof(cl_mem), &outputLcID);
+  //  clSetKernelArg(TheGPAK->TheKernels[iKernel], 7, sizeof(cl_mem), &outputLSize);
+  //  clSetKernelArg(TheGPAK->TheKernels[iKernel], 8, sizeof(cl_mem), &outputGrID);
+  //  clSetKernelArg(TheGPAK->TheKernels[iKernel], 9, sizeof(cl_mem), &outputNGSize);
+//    clSetKernelArg(TheGPAK->TheKernels[iKernel], 10, sizeof(cl_mem), &outputAll);    
     clEnqueueNDRangeKernel(TheGCAQ->TheQueue, TheGPAK->TheKernels[iKernel], 1, NULL, ipGlobalWorkParam, ipLocalWorkParam, 0, NULL, NULL);
     clFinish(TheGCAQ->TheQueue);
  
 // copy the results from out of the output buffer
 
-    clEnqueueReadBuffer(TheGCAQ->TheQueue, outputGlID, CL_TRUE, 0, iGlobalSize * sizeof(int), outputDataGlID, 0, NULL, NULL);
-    clEnqueueReadBuffer(TheGCAQ->TheQueue, outputGSize, CL_TRUE, 0, iGlobalSize * sizeof(int), outputDataGSize, 0, NULL, NULL);    
-    clEnqueueReadBuffer(TheGCAQ->TheQueue, outputLcID, CL_TRUE, 0, iGlobalSize * sizeof(int), outputDataLcID, 0, NULL, NULL);
-    clEnqueueReadBuffer(TheGCAQ->TheQueue, outputLSize, CL_TRUE, 0, iGlobalSize * sizeof(int), outputDataLSize, 0, NULL, NULL);
-    clEnqueueReadBuffer(TheGCAQ->TheQueue, outputGrID, CL_TRUE, 0, iGlobalSize * sizeof(int), outputDataGrID, 0, NULL, NULL);
-    clEnqueueReadBuffer(TheGCAQ->TheQueue, outputNGSize, CL_TRUE, 0, iGlobalSize * sizeof(int), outputDataNGSize, 0, NULL, NULL);
+//    clEnqueueReadBuffer(TheGCAQ->TheQueue, outputGlID, CL_TRUE, 0, iGlobalSize * sizeof(int), outputDataGlID, 0, NULL, NULL);
+//    clEnqueueReadBuffer(TheGCAQ->TheQueue, outputGSize, CL_TRUE, 0, iGlobalSize * sizeof(int), outputDataGSize, 0, NULL, NULL);    
+//    clEnqueueReadBuffer(TheGCAQ->TheQueue, outputLcID, CL_TRUE, 0, iGlobalSize * sizeof(int), outputDataLcID, 0, NULL, NULL);
+//    clEnqueueReadBuffer(TheGCAQ->TheQueue, outputLSize, CL_TRUE, 0, iGlobalSize * sizeof(int), outputDataLSize, 0, NULL, NULL);
+//    clEnqueueReadBuffer(TheGCAQ->TheQueue, outputGrID, CL_TRUE, 0, iGlobalSize * sizeof(int), outputDataGrID, 0, NULL, NULL);
+//    clEnqueueReadBuffer(TheGCAQ->TheQueue, outputNGSize, CL_TRUE, 0, iGlobalSize * sizeof(int), outputDataNGSize, 0, NULL, NULL);
     clEnqueueReadBuffer(TheGCAQ->TheQueue, outputF, CL_TRUE, 0, iGlobalSize * sizeof(float), outputDataF, 0, NULL, NULL); 
     if (iKernel == 0)
     {
@@ -432,12 +346,7 @@ int main(int argc, char *argv[])
     clReleaseMemObject(inputF);
     clReleaseMemObject(outputF);
     clReleaseMemObject(outputAll);
-    clReleaseMemObject(outputGlID);
-    clReleaseMemObject(outputGSize);
-    clReleaseMemObject(outputLcID);
-    clReleaseMemObject(outputLSize);
-    clReleaseMemObject(outputGrID);
-    clReleaseMemObject(outputNGSize);     
+   
     
 // print the results
     
@@ -449,9 +358,7 @@ int main(int argc, char *argv[])
     
     for(i=0;i<iGlobalSize; i++)
     {
-        printf("%d - %f - %f - %f - %d- %d- %d- %d- %d- %d\n", i, inputDataF[i], outputDataD[i], outputDataR[i], outputDataGlID[i],
-        outputDataGSize[i], outputDataLcID[i], outputDataLSize[i],
-            outputDataGrID[i], outputDataNGSize[i]);
+        printf("%d - %f - %f - %f\n", i, inputDataF[i], outputDataD[i], outputDataR[i]);
     }
     }
 // cleanup - release OpenCL resources
@@ -461,12 +368,6 @@ int main(int argc, char *argv[])
     free(outputDataF);
     free(outputDataD);
     free(outputDataR);
-    free(outputDataGlID);
-    free(outputDataGSize);
-    free(outputDataLcID);
-    free(outputDataLSize);
-    free(outputDataGrID);
-    free(outputDataNGSize);
    
     GPAKShutdown(TheGPAK);
     GCAQShutdown (TheGCAQ);
