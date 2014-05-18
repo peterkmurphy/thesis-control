@@ -13,6 +13,11 @@
 
 char *szSaxpyNormal =
 	"#if BIGFLOAT \n"
+"#if defined(cl_khr_fp64)\n"
+"#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n"
+"#elif defined(cl_amd_fp64)\n"
+"#pragma OPENCL EXTENSION cl_amd_fp64 : enable\n"
+"#endif\n"
 	"#define FLPT double\n"
 	"#else\n"
 	"#define FLPT float\n"
@@ -25,6 +30,11 @@ char *szSaxpyNormal =
 
 char *szSaxpyVect2 =
 	"#if BIGFLOAT \n"
+"#if defined(cl_khr_fp64)\n"
+"#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n"
+"#elif defined(cl_amd_fp64)\n"
+"#pragma OPENCL EXTENSION cl_amd_fp64 : enable\n"
+"#endif\n"
 	"#define FLPT double\n"
 	"#define FLPTV double2\n"
 	"#else\n"
@@ -37,17 +47,14 @@ char *szSaxpyVect2 =
 	"    size_t id = get_global_id(0);\n"
 	"    output[id] = inputY[id] +  (inputA * inputX[id]);\n" "}\n";
 
-/* 
-   char *szSaxpyVect4 = "#if BIGFLOAT \n"\ "#define FLPT double\n"\ "#define
-   FLPTV double4\n"\ "#else\n"\ "#define FLPT float\n"\ "#define FLPTV
-   float4\n"\ "#endif\n"\ "__kernel void saxpy4(__global FLPTV *inputY, \n"\ " 
-   __global FLPTV *inputX, FLPT inputA, __global FLPTV *output)\n"\ "{\n"\ "
-   size_t id = get_global_id(0);\n"\ " output[id] = inputY[id] + (inputA *
-   inputX[id]);\n"\ "}\n"; */
-
 
 char *szSaxpyVect4 =
 	"#if BIGFLOAT \n"
+"#if defined(cl_khr_fp64)\n"
+"#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n"
+"#elif defined(cl_amd_fp64)\n"
+"#pragma OPENCL EXTENSION cl_amd_fp64 : enable\n"
+"#endif\n"
 	"#define FLPT double\n"
 	"#define FLPTV double4\n"
 	"#else\n"
@@ -65,6 +72,11 @@ char *szSaxpyVect4 =
 
 char *szSaxpyVect8 =
 	"#if BIGFLOAT \n"
+"#if defined(cl_khr_fp64)\n"
+"#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n"
+"#elif defined(cl_amd_fp64)\n"
+"#pragma OPENCL EXTENSION cl_amd_fp64 : enable\n"
+"#endif\n"
 	"#define FLPT double\n"
 	"#define FLPTV double8\n"
 	"#else\n"
@@ -79,6 +91,11 @@ char *szSaxpyVect8 =
 
 char *szSaxpyVect16 =
 	"#if BIGFLOAT \n"
+"#if defined(cl_khr_fp64)\n"
+"#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n"
+"#elif defined(cl_amd_fp64)\n"
+"#pragma OPENCL EXTENSION cl_amd_fp64 : enable\n"
+"#endif\n"
 	"#define FLPT double\n"
 	"#define FLPTV double16\n"
 	"#else\n"
@@ -130,10 +147,11 @@ int main(int argc, char *argv[])
 #else
 	const char *szFloatOpt = NULL;
 #endif
+    const int iNoKernels = 5;
 	char *ourKernelStrings[5] =
 		{ szSaxpyNormal, szSaxpyVect2, szSaxpyVect4, szSaxpyVect8,
 szSaxpyVect16 };
-	GPAK *TheGPAK = GPAKSetup(TheGCAQ, 5, ourKernelStrings, szFloatOpt);
+	GPAK *TheGPAK = GPAKSetup(TheGCAQ, iNoKernels, ourKernelStrings, szFloatOpt);
 	if (TheGPAK == NULL)
 	{
 		GCAQShutdown(TheGCAQ);
@@ -153,8 +171,8 @@ szSaxpyVect16 };
 	SetFNull(DATA_SIZE, results);
 	int i;
 
-	struct timespec start[5];
-	struct timespec end[5];
+	struct timespec start[iNoKernels];
+	struct timespec end[iNoKernels];
 
 
 	int err;
@@ -187,7 +205,7 @@ szSaxpyVect16 };
 	int rep;
 
 	int iKernel;
-	for (iKernel = 0; iKernel < 5; iKernel++)
+	for (iKernel = 0; iKernel < iNoKernels; iKernel++)
 	{
 
 		for (i = 0; i < DATA_SIZE; i++)
@@ -268,7 +286,7 @@ szSaxpyVect16 };
 	GCAQShutdown(TheGCAQ);
 	// printf("%d - %f\n", iVal, timespecDiff(&end, &start) / 1000000000.0);
 	printf("%d - ", iVal);
-	for (iKernel = 0; iKernel < 5; iKernel++)
+	for (iKernel = 0; iKernel < iNoKernels; iKernel++)
 	{
 		printf("%f - ", (1.0 * TLPERS * iVal * iNoReps) /
 			   (MEGAHERTZ * timespecDiff(&(end[iKernel]), &(start[iKernel]))));

@@ -108,4 +108,20 @@ void printvector(const char* name, INTG isize, const FLPT* dvector);
 
 void printintvector(const char* name, INTG isize, const INTG* ivector);
 
+// This gets the sum of numbers from 1 to n. 
+
+FLPT sumofnumbers(INTG nvalue);
+
+// This gets the sum of squares of numbers from 1 to n.
+
+FLPT sumofnumberssq(INTG nvalue);
+
+// This gets the sum of numbers from m to n inclusive (as a float).
+
+FLPT sumofnumbersmton(INTG mvalue, INTG nvalue);
+
+// This gets the sum of squares of numbers from m to n inclusive.
+
+FLPT sumofnumberssqmton(INTG mvalue, INTG nvalue);
+
 #endif // PROJCOMMON_H 

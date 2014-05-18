@@ -126,4 +126,46 @@ void printintvector(const char* name, INTG isize, const INTG* ivector)
     printf("%d]\n", ivector[isize - 1]);
 } 
 
+// This gets the sum of numbers from 1 to n. 
+
+FLPT sumofnumbers(INTG nvalue)
+{
+    FLPT fVal = nvalue;
+    FLPT fSum = (fVal * (fVal + 1.0)) / 2.0;
+    return fSum;
+}
+
+// This gets the sum of squares of numbers from 1 to n.
+
+FLPT sumofnumberssq(INTG nvalue)
+{
+    FLPT fVal = nvalue;
+    FLPT fSum = (fVal * (fVal + 1) * ((2 * fVal) + 1)) / 6.0;  
+    return fSum;
+}
+
+
+// This gets the sum of numbers from m to n inclusive (as a float).
+
+FLPT sumofnumbersmton(INTG mvalue, INTG nvalue)
+{
+    FLPT nresult = sumofnumbers(nvalue);
+    FLPT mresult = sumofnumbers(mvalue);
+    FLPT outresult = nresult - mresult + mvalue;
+    return outresult;
+}    
+
+// This gets the sum of squares of numbers from m to n inclusive.
+
+FLPT sumofnumberssqmton(INTG mvalue, INTG nvalue)
+{
+    FLPT nresult = sumofnumberssq(nvalue);
+    FLPT mresult = sumofnumberssq(mvalue);
+    FLPT outresult = nresult - mresult + (mvalue * mvalue);
+    return outresult;
+}    
+
+
+
+
 
