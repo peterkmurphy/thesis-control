@@ -123,6 +123,51 @@ char *szDotProduct =
 "} \n";
 
 
+char *szDotProduct2 =
+	"#if BIGFLOAT \n"
+"#if defined(cl_khr_fp64)\n"
+"#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n"
+"#elif defined(cl_amd_fp64)\n"
+"#pragma OPENCL EXTENSION cl_amd_fp64 : enable\n"
+"#endif\n"
+	"#define FLPT double\n"
+	"#define FLPTV double2\n"    
+	"#else\n"
+	"#define FLPT float\n"
+	"#define FLPTV float2\n"
+	"#endif\n"
+"__kernel \n"\
+"void dotproduct2( \n"\
+"            __const int length, \n"\
+"            __global FLPTV* fin, \n"\
+"            __local FLPT* ftemp, \n"\
+"            __global FLPT* freduce){ \n"\
+" \n"\
+"  int global_index = get_global_id(0); \n"\
+"  int local_index = get_local_id(0); \n"\
+"  int local_size = get_local_size(0); \n"\
+"  int group_index = get_group_id(0); \n"\
+"  if (global_index < length) { \n"\
+"  freduce[global_index] = 0.0; \n"\
+"  ftemp[local_index/2] = dot(fin[global_index/2],fin[global_index/2]);  \n"\
+"  barrier(CLK_LOCAL_MEM_FENCE); \n"\
+"  for(int offset = 1; \n"\
+"      offset < local_size/2; \n"\
+"      offset <<= 1) { \n"\
+"    int mask = (offset << 1) - 1; \n"\
+"    if ((local_index & mask) == 0) { \n"\
+"      float other = ftemp[local_index + offset]; \n"\
+"      float mine = ftemp[local_index]; \n"\
+"      ftemp[local_index] = mine + other; \n"\
+"    } \n"\
+"    barrier(CLK_LOCAL_MEM_FENCE); \n"\
+"  } \n"\
+"  if (local_index == 0) { \n"\
+"    freduce[group_index] = ftemp[0]; \n"\
+"  }\n"\
+"} \n"\
+"} \n";
+
 char *szDotProduct4 =
 	"#if BIGFLOAT \n"
 "#if defined(cl_khr_fp64)\n"
@@ -171,6 +216,9 @@ char *szDotProduct4 =
 
 
 
+
+
+
 char *szReduce =
 	"#if BIGFLOAT \n"
 "#if defined(cl_khr_fp64)\n"
@@ -214,6 +262,57 @@ char *szReduce =
 "} \n"\
 "} \n";
 
+
+char *szReduce2 =
+	"#if BIGFLOAT \n"
+"#if defined(cl_khr_fp64)\n"
+"#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n"
+"#elif defined(cl_amd_fp64)\n"
+"#pragma OPENCL EXTENSION cl_amd_fp64 : enable\n"
+"#endif\n"
+	"#define FLPT double\n"
+	"#define FLPTV double2\n"    
+	"#else\n"
+	"#define FLPT float\n"
+	"#define FLPTV float2\n"
+	"#endif\n"
+"__kernel \n"\
+"void reduce2( \n"\
+"            __const int length, \n"\
+"            __global FLPTV* fin, \n"\
+"            __local FLPT* ftemp, \n"\
+"            __global FLPT* freduce){ \n"\
+" \n"\
+"  int global_index = get_global_id(0); \n"\
+"  int local_index = get_local_id(0); \n"\
+"  int local_size = get_local_size(0); \n"\
+"  int group_index = get_group_id(0); \n"\
+"  if (global_index < length) { \n"\
+"  freduce[global_index] = 0.0; \n"\
+"  ftemp[local_index/2] = fin[global_index/2].s0 + fin[global_index/2].s1; \n"\
+"  barrier(CLK_LOCAL_MEM_FENCE); \n"\
+"  for(int offset = 1; \n"\
+"      offset < local_size/2; \n"\
+"      offset <<= 1) { \n"\
+"    int mask = (offset << 1) - 1; \n"\
+"    if ((local_index & mask) == 0) { \n"\
+"      float other = ftemp[local_index + offset]; \n"\
+"      float mine = ftemp[local_index]; \n"\
+"      ftemp[local_index] = mine + other; \n"\
+"    } \n"\
+"    barrier(CLK_LOCAL_MEM_FENCE); \n"\
+"  } \n"\
+"  if (local_index == 0) { \n"\
+"    freduce[group_index] = ftemp[0]; \n"\
+"  }\n"\
+"} \n"\
+"} \n";
+
+
+
+
+
+
 char *szReduce4 =
 	"#if BIGFLOAT \n"
 "#if defined(cl_khr_fp64)\n"
@@ -228,7 +327,7 @@ char *szReduce4 =
 	"#define FLPTV float4\n"
 	"#endif\n"
 "__kernel \n"\
-"void reduce( \n"\
+"void reduce4( \n"\
 "            __const int length, \n"\
 "            __global FLPTV* fin, \n"\
 "            __local FLPT* ftemp, \n"\
@@ -308,12 +407,12 @@ int main(int argc, char *argv[])
 	{
 		bPrint = 1;
 	}
-    printf("A x %f, %f, %f, %f\n", sumofnumbersmton(1, iGlobalSize), 
-        sumofnumbersmton(iGlobalSize + 1, iGlobalSize * 2),
-sumofnumberssqmton(1, iGlobalSize), 
-        sumofnumberssqmton(iGlobalSize + 1, iGlobalSize * 2));    
+//    printf("A x %f, %f, %f, %f\n", sumofnumbersmton(1, iGlobalSize), 
+  //      sumofnumbersmton(iGlobalSize + 1, iGlobalSize * 2),
+//sumofnumberssqmton(1, iGlobalSize), 
+ //       sumofnumberssqmton(iGlobalSize + 1, iGlobalSize * 2));    
 
-    printf("The global size is %d, the global work size is %ld, and the local work size is %ld. \n", iGlobalSize, iGlobalWorkSize, iLocalWorkSize);
+ //   printf("The global size is %d, the global work size is %ld, and the local work size is %ld. \n", iGlobalSize, iGlobalWorkSize, iLocalWorkSize);
     size_t * ipGlobalWorkParam = NULL;
     if (iGlobalWorkSize != -1)
     {
@@ -338,9 +437,9 @@ sumofnumberssqmton(1, iGlobalSize),
 #else
 	const char *szFloatOpt = NULL;
 #endif
-    const int iNoKernels = 2;
-	char *ourKernelStrings[2] =
-		{ szDotProduct, szReduce};
+    const int iNoKernels = 6;
+	char *ourKernelStrings[6] =
+		{ szDotProduct, szDotProduct2, szDotProduct4, szReduce, szReduce2, szReduce4};
 
 
   	GPAK *TheGPAK = GPAKSetup(TheGCAQ, iNoKernels, ourKernelStrings, szFloatOpt);
