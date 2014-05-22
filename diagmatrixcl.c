@@ -489,6 +489,40 @@ char *szDiagLocal16 =
 "  vstore16(accumulator, 0, row + y); \n"\
 "} \n";
 
+// This is a quick and dirty routine that assumes that we have 
+// (a) All non-zero values in the diagonal matrix are 1,
+// (b) iNoDiagonals is odd.
+// (c) All diagonals go from (-iNoDiagonal/2, iNoDiagonal/2)
+// If you do anything different, write a new function.
+
+
+FLPT * flptcalculateeasydiagonal(INTG iMatrixSize, INTG iNoDiagonals, 
+    FLPT * fToWrite)
+{
+    INTG iIter;
+    INTG HalfVal = iNoDiagonals / 2;
+    for (iIter = 0; iIter < iMatrixSize; iIter++)
+    {
+        if (iIter < HalfVal)
+        {
+            fToWrite[iIter] =  1.0 * (iNoDiagonals - HalfVal + iIter);
+        }
+        else if (iIter >= (iMatrixSize - HalfVal))
+        {
+            
+            fToWrite[iIter] =  1.0 * (iNoDiagonals + (iMatrixSize - HalfVal) - iIter - 1);   
+        }
+        else
+        {
+            fToWrite[iIter] = 1.0 * iNoDiagonals;
+        }
+    }
+    return fToWrite;
+}
+    
+    
+
+
 
 int main(int argc, char *argv[])
 {
@@ -622,6 +656,11 @@ int main(int argc, char *argv[])
     int rep;
 	int iKernel;
 
+    FLPT * fDiagResultTest = (FLPT *) malloc(iNumRows * sizeof(FLPT));
+    flptcalculateeasydiagonal(iNumRows, iNumDiags, fDiagResultTest);
+    printvector("Result to check", iNumRows, fDiagResultTest);
+    
+    
 	for (iKernel = 0; iKernel < iNumberOfKernels; iKernel++)
 	{
 		// printf("%ld\n", TheGPAK->TheMaxWorkGroupSizes[iKernel]);
@@ -671,16 +710,34 @@ int main(int argc, char *argv[])
 
 		// printing the results.
 
-    		if (bPrint)
+
+		if (bPrint)
 		{
 
-            printf("output: ");
-            for(i=0;i<iNumRows; i++)
-            {
-                printf("%f ",outputDataY[i]);
-            }
-            printf("\n");
+			for (i = 0; i < iNumRows; i++)
+			{
+				if (outputDataY[i] != fDiagResultTest[i])
+				{
+					printf
+						("A problem at kernel %d and iteration %d for actual value %f but expected value %f!\n",
+						 iKernel, i, outputDataY[i], fDiagResultTest[i]);
+					break;
+				}
+			}
 		}
+
+
+
+    //		if (bPrint)
+	//	{
+
+     //       printf("output: ");
+    //        for(i=0;i<iNumRows; i++)
+    //        {
+    //            printf("%f ",outputDataY[i]);
+    //        }
+    //        printf("\n");
+	//	}
     
     
 	}
@@ -704,6 +761,7 @@ int main(int argc, char *argv[])
     free(inputDataA);
     free(inputDataOff);
     free(outputDataY);
+    free(fDiagResultTest);
     clReleaseMemObject(outputY);
     clReleaseMemObject(inputOff);
     clReleaseMemObject(inputX);
