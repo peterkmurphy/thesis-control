@@ -16,6 +16,9 @@ typedef struct gpu_contextandqueue {
     cl_context TheContext;
     cl_command_queue TheQueue;
     cl_device_id TheDeviceId;
+    cl_bool TheSupportOfImages;
+    size_t TheImageWidth;
+    size_t TheImageHeight;
 } GCAQ;
 
 // This creates a pointer to a GCAQ - GPU Content And Queue - item.

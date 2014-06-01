@@ -17,13 +17,13 @@ if len(sys.argv) >= 3:
     NOITERS = str(int(sys.argv[3]));
 else:
     MINMATSIZE = 16384;
-    MAXMATSIZE = 16384 # 2097152;
-    NOITERS = "100";
+    MAXMATSIZE = 4194304 #16384 2097152;
+    NOITERS = "3";
 
 # Now we try out the executables.
 
-for k in EFF_OPTIONS:
-    for j in OPENMP_OPTIONS:
+for k in ["0", "3"]: #EFF_OPTIONS:
+    for j in ["", "mp", "ur", "mpur"]: #OPENMP_OPTIONS:
         ourFile = "./" + TIMEDIRCREATE + j + "ucds" + k; 
         i = MINMATSIZE; # The minimum iteration amount
         print ourFile;

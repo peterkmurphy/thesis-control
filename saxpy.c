@@ -23,10 +23,11 @@ char *szSaxpyNormal =
 	"#define FLPT float\n"
 	"#endif\n"
 	"__kernel void saxpy(__global FLPT *inputY, \n"
-	"        __global FLPT *inputX,  FLPT inputA, __global FLPT *output)\n"
+	"        __global FLPT *inputX,  FLPT inputA, __global FLPT *output, int iLength)\n"
 	"{\n"
 	"    size_t id = get_global_id(0);\n"
-	"    output[id] = inputY[id] +  (inputA * inputX[id]);\n" "}\n";
+    "    if (id < iLength) { \n"
+	"    output[id] = inputY[id] +  (inputA * inputX[id]);\n" "}}\n";
 
 char *szSaxpyVect2 =
 	"#if BIGFLOAT \n"
@@ -42,10 +43,11 @@ char *szSaxpyVect2 =
 	"#define FLPTV float2\n"
 	"#endif\n"
 	"__kernel void saxpy2(__global FLPTV *inputY, \n"
-	"        __global FLPTV *inputX,  FLPT inputA, __global FLPTV *output)\n"
+	"        __global FLPTV *inputX,  FLPT inputA, __global FLPTV *output, int iLength)\n"
 	"{\n"
 	"    size_t id = get_global_id(0);\n"
-	"    output[id] = inputY[id] +  (inputA * inputX[id]);\n" "}\n";
+    "    if (id < iLength) { \n"    
+	"    output[id] = inputY[id] +  (inputA * inputX[id]);\n" "}}\n";
 
 
 char *szSaxpyVect4 =
@@ -62,10 +64,11 @@ char *szSaxpyVect4 =
 	"#define FLPTV float4\n"
 	"#endif\n"
 	"__kernel void saxpy4(__global FLPTV *inputY, \n"
-	"        __global FLPTV *inputX,  FLPT inputA, __global FLPTV *output)\n"
+	"        __global FLPTV *inputX,  FLPT inputA, __global FLPTV *output, int iLength)\n"
 	"{\n"
 	"    size_t id = get_global_id(0);\n"
-	"    output[id] = inputY[id] +  (inputA * inputX[id]);\n" "}\n";
+    "    if (id < iLength) { \n"     
+	"    output[id] = inputY[id] +  (inputA * inputX[id]);\n" "}}\n";
 
 
 
@@ -84,10 +87,11 @@ char *szSaxpyVect8 =
 	"#define FLPTV float8\n"
 	"#endif\n"
 	"__kernel void saxpy8(__global FLPTV *inputY, \n"
-	"        __global FLPTV *inputX,  FLPT inputA, __global FLPTV *output)\n"
+	"        __global FLPTV *inputX,  FLPT inputA, __global FLPTV *output, int iLength)\n"
 	"{\n"
 	"    size_t id = get_global_id(0);\n"
-	"    output[id] = inputY[id] +  (inputA * inputX[id]);\n" "}\n";
+    "    if (id < iLength) { \n"     
+	"    output[id] = inputY[id] +  (inputA * inputX[id]);\n" "}}\n";
 
 char *szSaxpyVect16 =
 	"#if BIGFLOAT \n"
@@ -103,10 +107,31 @@ char *szSaxpyVect16 =
 	"#define FLPTV float16\n"
 	"#endif\n"
 	"__kernel void saxpy16(__global FLPTV *inputY, \n"
-	"        __global FLPTV *inputX,  FLPT inputA, __global FLPTV *output)\n"
+	"        __global FLPTV *inputX,  FLPT inputA, __global FLPTV *output, int iLength)\n"
 	"{\n"
 	"    size_t id = get_global_id(0);\n"
-	"    output[id] = inputY[id] +  (inputA * inputX[id]);\n" "}\n";
+    "    if (id < iLength) { \n"      
+	"    output[id] = inputY[id] +  (inputA * inputX[id]);\n" "}}\n";
+
+char *szSaxpyImage =
+"__constant sampler_t sampler = \n"
+"CLK_NORMALIZED_COORDS_FALSE\n"
+"| CLK_ADDRESS_CLAMP_TO_EDGE \n"
+"| CLK_FILTER_NEAREST; \n"
+" \n"
+"__kernel void horizontal_reflect(read_only image2d_t src, \n"
+"write_only image2d_t dst) \n"
+"{ \n"
+"    int x = get_global_id(0); \n"
+"    // x-coord \n"
+"    int y = get_global_id(1); \n"
+"    // y-coord \n"
+"    int width = get_image_width(src); \n"
+"    float4 src_val = read_imagef(src, sampler, (int2)(x, y)); \n" 
+"    write_imagef(dst, (int2)(x, y), src_val); \n"
+"} \n";
+
+
 
 int main(int argc, char *argv[])
 {
@@ -142,15 +167,16 @@ int main(int argc, char *argv[])
 	{
 		return 1;
 	}
+    
 #if BIGFLOAT
 	const char *szFloatOpt = "-DBIGFLOAT";
 #else
 	const char *szFloatOpt = NULL;
 #endif
-    const int iNoKernels = 5;
-	char *ourKernelStrings[5] =
+    const int iNoKernels = 6;
+	char *ourKernelStrings[6] =
 		{ szSaxpyNormal, szSaxpyVect2, szSaxpyVect4, szSaxpyVect8,
-szSaxpyVect16 };
+szSaxpyVect16, szSaxpyImage };
 	GPAK *TheGPAK = GPAKSetup(TheGCAQ, iNoKernels, ourKernelStrings, szFloatOpt);
 	if (TheGPAK == NULL)
 	{
@@ -203,9 +229,86 @@ szSaxpyVect16 };
 		return 5;
 	}
 	int rep;
+    int iWorkSize = DATA_SIZE;
+    
+// This is where we start adding the image code, and hopefully it all works.
 
+    static const cl_image_format format = { CL_RGBA, CL_FLOAT };    
+    
+// Now we calculate the size of the image. If the vector size is less than maxwidth,
+// then we set the height to 1. Otherwise, we set the width as big as possible,
+// and get the height from there.    
+    
+    size_t sTheImageWidth;
+  	size_t sTheImageHeight;
+
+    
+    // Rather than reading in data from outside, how about we roll a buffer
+    
+    FLPT fInputTest[256];
+    FLPT fOutputTest[256];
+    SetFIncrease(256, fInputTest);
+    SetFNull(256, fOutputTest);
+    printvector("Test", 256, fInputTest);
+    printvector("Other Test", 256, fOutputTest);
+    if (iWorkSize > TheGCAQ->TheImageWidth)
+    {
+        sTheImageWidth = TheGCAQ->TheImageWidth;
+        sTheImageHeight = iWorkSize / TheGCAQ->TheImageWidth;
+    }
+    else
+    {
+        sTheImageWidth = iWorkSize;
+        sTheImageHeight = 1;
+    }
+    printf("This is width %ld and height %ld\n", sTheImageWidth, sTheImageHeight);
+    cl_mem input_image = clCreateImage2D(TheGCAQ->TheContext, CL_MEM_READ_ONLY, &format,
+        64, 1 /*sTheImageHeight*/, 0, NULL, &err);
+    cl_mem output_image = clCreateImage2D(TheGCAQ->TheContext, CL_MEM_READ_ONLY, &format,
+        /*sTheImageWidth */ 64, 1 /*sTheImageHeight*/, 0, NULL, &err);
+  //  cl_mem input_buffer = clCreateBuffer(TheGCAQ->TheContext, CL_MEM_READ_ONLY,
+    //    sizeof(cl_float)*4*sTheImageWidth*sTheImageWidth, NULL, &err);
+   // cl_mem output_buffer = clCreateBuffer(TheGCAQ->TheContext, CL_MEM_WRITE_ONLY,
+    //    sizeof(cl_float)*4*sTheImageWidth*sTheImageWidth, NULL, &err);    
+
+// We copy everything!    
+    
+    size_t origin[3] = {0, 0, 0}; 
+    size_t region[3] = {64, 1, 1}; // {sTheImageWidth, sTheImageHeight, 1}; 
+
+// Time to enqueue the image!    
+
+    clEnqueueWriteImage(TheGCAQ->TheQueue, input_image, CL_TRUE, origin, region,
+        256, 0, fInputTest, 0, NULL, NULL);
+
+// Better set those kernel arguments, otherwise it's good for naught.
+
+	clSetKernelArg(TheGPAK->TheKernels[5], 0, sizeof(cl_mem),
+						   &input_image);
+    clSetKernelArg(TheGPAK->TheKernels[5], 1, sizeof(cl_mem),
+						   &output_image);    
+    
+    
+// The global work size should be as per the width and height. The local work size seems to be 
+// 256 square rooted. Good enough for now.
+    
+    size_t szGlobalWorkSizeHere[] = {64, 1};
+    size_t szLocalWorkSizeHere[] = {8, 8};
+
+// Now it is time to launch the kernel.
+    
+    clEnqueueNDRangeKernel(TheGCAQ->TheQueue, TheGPAK->TheKernels[5], 2, NULL,
+        szGlobalWorkSizeHere, szLocalWorkSizeHere, 0, NULL, NULL);
+    clFinish(TheGCAQ->TheQueue);
+    clEnqueueReadImage(TheGCAQ->TheQueue, output_image, CL_TRUE, 
+        origin, region, sTheImageWidth*sizeof(unsigned char) * 4, 0, fOutputTest, 
+        0, NULL, NULL);
+    printvector("Other Test", 256, fOutputTest);    
+    
+//
+    
 	int iKernel;
-	for (iKernel = 0; iKernel < iNoKernels; iKernel++)
+	for (iKernel = 0; iKernel < iNoKernels-1; iKernel++)
 	{
 
 		for (i = 0; i < DATA_SIZE; i++)
@@ -234,13 +337,14 @@ szSaxpyVect16 };
 						   &inputDataA);
 			clSetKernelArg(TheGPAK->TheKernels[iKernel], 3, sizeof(cl_mem),
 						   &output);
-
+			clSetKernelArg(TheGPAK->TheKernels[iKernel], 4, sizeof(int),
+						   &iWorkSize);
 			// enqueue the kernel command for execution
 
 			clEnqueueNDRangeKernel(TheGCAQ->TheQueue,
 								   TheGPAK->TheKernels[iKernel], 1, NULL,
 								   &global,
-								   &(TheGPAK->TheMaxWorkGroupSizes[iKernel]),
+								NULL, //   &(TheGPAK->TheMaxWorkGroupSizes[iKernel]),
 								   0, NULL, NULL);
 			clFinish(TheGCAQ->TheQueue);
 
@@ -269,7 +373,8 @@ szSaxpyVect16 };
 				}
 			}
 		}
-		global = global /2;
+        iWorkSize = iWorkSize / 2;
+		global = global / 2;
 	}
 	// print the results
 

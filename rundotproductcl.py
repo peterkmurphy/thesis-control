@@ -23,8 +23,8 @@ else:
 
 # Now we try out the executables.
 
-for k in EFF_OPTIONS:
-    for j in OPENMP_OPTIONS:
+for k in ["3"]: #EFF_OPTIONS:
+    for j in ["mpur"]: #OPENMP_OPTIONS:
         ourFile = "./" + TIMEDOTPRODUCTCLCREATE + j + "dotproductcl" + k; 
         i = MINMATSIZE; # The minimum iteration amount
         print ourFile;

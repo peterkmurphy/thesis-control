@@ -78,6 +78,44 @@ char *szDiagAligned =
 "  y[row] = accumulator; \n"  \
 "} \n"; 
 
+char *szDiagMultLocal =
+	"#if BIGFLOAT \n"
+"#if defined(cl_khr_fp64)\n"
+"#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n"
+"#elif defined(cl_amd_fp64)\n"
+"#pragma OPENCL EXTENSION cl_amd_fp64 : enable\n"
+"#endif\n"
+	"#define FLPT double\n"
+	"#else\n"
+	"#define FLPT float\n"
+	"#endif\n"
+"    __kernel void dia_basiclocal(__global FLPT *A, __const int rows, \n"\
+"    __const int diags, __global int *offsets, \n"\
+"    __global FLPT *x, __global FLPT *y, __local FLPT* ftemp) \n"\
+"{ \n"\
+"  int local_id = get_local_id(0); \n"\
+"  int offset_id = local_id; \n"\
+"  while ((offset_id < 256) && (offset_id < diags)) { \n"\
+"    ftemp[offset_id] = offsets[offset_id]; \n"\
+"    offset_id = offset_id + get_local_size(0); \n"\
+"  } \n"\
+"  barrier(CLK_LOCAL_MEM_FENCE); \n"\
+"    int row = get_global_id(0); \n"\
+"    FLPT accumulator = 0; \n"\
+"    for(int diag = 0; diag < diags; diag++) \n"\
+"    { \n"\
+"        int col = row + ftemp[diag]; \n"\
+"        if ((col >= 0) && (col < rows)) \n"\
+"        { \n"\
+"            float m = A[diag*rows + row]; \n"\
+"            float v = x[col]; \n"\
+"            accumulator += m * v; \n"\
+"        } \n"\
+"    } \n"\
+"    y[row] = accumulator; \n"\
+"} \n";
+
+
 
 char *szDiagLocal = 
 	"#if BIGFLOAT \n"
@@ -565,14 +603,14 @@ int main(int argc, char *argv[])
     {
         return 1;
     }
-    const int iNumberOfKernels = 11;
+    const int iNumberOfKernels = 10; //11;
 #if BIGFLOAT
 	const char *szFloatOpt = "-DBIGFLOAT";
 #else
 	const char *szFloatOpt = NULL;
 #endif
-	char *ourKernelStrings[11] =
-		{  szDiagMult, szDiagLocal, szDiagAligned, szDiagLocal2, szDiagAligned2,
+	char *ourKernelStrings[12] =
+		{  szDiagMultLocal, szDiagMult, szDiagLocal, szDiagAligned, szDiagLocal2, szDiagAligned2,
             szDiagLocal4, szDiagAligned4, szDiagLocal8, szDiagAligned8,
             szDiagLocal16, szDiagAligned16}; 
 
@@ -658,7 +696,7 @@ int main(int argc, char *argv[])
 
     FLPT * fDiagResultTest = (FLPT *) malloc(iNumRows * sizeof(FLPT));
     flptcalculateeasydiagonal(iNumRows, iNumDiags, fDiagResultTest);
-    printvector("Result to check", iNumRows, fDiagResultTest);
+  //  printvector("Result to check", iNumRows, fDiagResultTest);
     
     
 	for (iKernel = 0; iKernel < iNumberOfKernels; iKernel++)
@@ -687,7 +725,7 @@ int main(int argc, char *argv[])
             
 // The local versions of matrix version code uses a local argument.
     
-    if ((iKernel % 2) == 1)
+    if ((iKernel % 2) == 0)
     {
         clSetKernelArg(TheGPAK->TheKernels[iKernel], 6, 256 * sizeof(float), NULL);
     }

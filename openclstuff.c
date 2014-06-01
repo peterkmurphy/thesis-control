@@ -55,6 +55,18 @@ GCAQ * GCAQSetup()
     
     TheGCAQ->TheQueue = clCreateCommandQueue(TheGCAQ->TheContext, TheDeviceId, 0, &err);
     TheGCAQ->TheDeviceId = TheDeviceId;
+    
+    // This gets extra graphic stuff for imaging requests in and out.
+    
+    clGetDeviceInfo(TheDeviceId, CL_DEVICE_IMAGE_SUPPORT, sizeof(cl_bool), &(TheGCAQ->TheSupportOfImages),
+        NULL);
+    clGetDeviceInfo(TheDeviceId, CL_DEVICE_IMAGE2D_MAX_HEIGHT, sizeof(size_t), &(TheGCAQ->TheImageWidth),
+        NULL);
+    clGetDeviceInfo(TheDeviceId, CL_DEVICE_IMAGE2D_MAX_HEIGHT, sizeof(size_t), &(TheGCAQ->TheImageHeight),
+        NULL);        
+    
+    // Nothing else needed for now.
+    
     return TheGCAQ;
     
 }
