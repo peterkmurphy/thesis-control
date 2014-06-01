@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
 #else
 	const char *szFloatOpt = NULL;
 #endif
-    const int iNoKernels = 6;
+    const int iNoKernels = 5;
 	char *ourKernelStrings[6] =
 		{ szSaxpyNormal, szSaxpyVect2, szSaxpyVect4, szSaxpyVect8,
 szSaxpyVect16, szSaxpyImage };
@@ -232,7 +232,7 @@ szSaxpyVect16, szSaxpyImage };
     int iWorkSize = DATA_SIZE;
     
 // This is where we start adding the image code, and hopefully it all works.
-
+/*
     static const cl_image_format format = { CL_RGBA, CL_FLOAT };    
     
 // Now we calculate the size of the image. If the vector size is less than maxwidth,
@@ -263,14 +263,14 @@ szSaxpyVect16, szSaxpyImage };
     }
     printf("This is width %ld and height %ld\n", sTheImageWidth, sTheImageHeight);
     cl_mem input_image = clCreateImage2D(TheGCAQ->TheContext, CL_MEM_READ_ONLY, &format,
-        64, 1 /*sTheImageHeight*/, 0, NULL, &err);
-    cl_mem output_image = clCreateImage2D(TheGCAQ->TheContext, CL_MEM_READ_ONLY, &format,
-        /*sTheImageWidth */ 64, 1 /*sTheImageHeight*/, 0, NULL, &err);
+        64, 1 /*sTheImageHeight*///, 0, NULL, &err);
+    //cl_mem output_image = clCreateImage2D(TheGCAQ->TheContext, CL_MEM_READ_ONLY, &format,
+     //   /*sTheImageWidth */ 64//, 1 /*sTheImageHeight*///, 0, NULL, &err);
   //  cl_mem input_buffer = clCreateBuffer(TheGCAQ->TheContext, CL_MEM_READ_ONLY,
     //    sizeof(cl_float)*4*sTheImageWidth*sTheImageWidth, NULL, &err);
    // cl_mem output_buffer = clCreateBuffer(TheGCAQ->TheContext, CL_MEM_WRITE_ONLY,
     //    sizeof(cl_float)*4*sTheImageWidth*sTheImageWidth, NULL, &err);    
-
+/*
 // We copy everything!    
     
     size_t origin[3] = {0, 0, 0}; 
@@ -304,7 +304,7 @@ szSaxpyVect16, szSaxpyImage };
         origin, region, sTheImageWidth*sizeof(unsigned char) * 4, 0, fOutputTest, 
         0, NULL, NULL);
     printvector("Other Test", 256, fOutputTest);    
-    
+*/    
 //
     
 	int iKernel;
