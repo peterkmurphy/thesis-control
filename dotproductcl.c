@@ -1,6 +1,3 @@
-// dotproduct.c. Written by Peter Murphy.
-// Copyright (c) 2014.
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -22,11 +19,6 @@
 
 char *szExamine =
 	"#if BIGFLOAT \n"
-"#if defined(cl_khr_fp64)\n"
-"#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n"
-"#elif defined(cl_amd_fp64)\n"
-"#pragma OPENCL EXTENSION cl_amd_fp64 : enable\n"
-"#endif\n"
 	"#define FLPT double\n"
 	"#else\n"
 	"#define FLPT float\n"
@@ -81,11 +73,6 @@ char *szExamine =
 
 char *szDotProduct =
 	"#if BIGFLOAT \n"
-"#if defined(cl_khr_fp64)\n"
-"#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n"
-"#elif defined(cl_amd_fp64)\n"
-"#pragma OPENCL EXTENSION cl_amd_fp64 : enable\n"
-"#endif\n"
 	"#define FLPT double\n"
 	"#else\n"
 	"#define FLPT float\n"
@@ -94,11 +81,13 @@ char *szDotProduct =
 "void dotproduct( \n"\
 "            __const int length, \n"\
 "            __global FLPT* fin, \n"\
+"            __global FLPT* fout, \n"\
 "            __local FLPT* ftemp, \n"\
 "            __global FLPT* freduce){ \n"\
 " \n"\
 "  int global_index = get_global_id(0); \n"\
 "  int local_index = get_local_id(0); \n"\
+"  int global_size = get_global_size(0); \n"\
 "  int local_size = get_local_size(0); \n"\
 "  int group_index = get_group_id(0); \n"\
 "  if (global_index < length) { \n"\
@@ -123,109 +112,8 @@ char *szDotProduct =
 "} \n";
 
 
-char *szDotProduct2 =
-	"#if BIGFLOAT \n"
-"#if defined(cl_khr_fp64)\n"
-"#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n"
-"#elif defined(cl_amd_fp64)\n"
-"#pragma OPENCL EXTENSION cl_amd_fp64 : enable\n"
-"#endif\n"
-	"#define FLPT double\n"
-	"#define FLPTV double2\n"    
-	"#else\n"
-	"#define FLPT float\n"
-	"#define FLPTV float2\n"
-	"#endif\n"
-"__kernel \n"\
-"void dotproduct2( \n"\
-"            __const int length, \n"\
-"            __global FLPTV* fin, \n"\
-"            __local FLPT* ftemp, \n"\
-"            __global FLPT* freduce){ \n"\
-" \n"\
-"  int global_index = get_global_id(0); \n"\
-"  int local_index = get_local_id(0); \n"\
-"  int local_size = get_local_size(0); \n"\
-"  int group_index = get_group_id(0); \n"\
-"  if (global_index < length) { \n"\
-"  freduce[global_index] = 0.0; \n"\
-"  ftemp[local_index/2] = dot(fin[global_index/2],fin[global_index/2]);  \n"\
-"  barrier(CLK_LOCAL_MEM_FENCE); \n"\
-"  for(int offset = 1; \n"\
-"      offset < local_size/2; \n"\
-"      offset <<= 1) { \n"\
-"    int mask = (offset << 1) - 1; \n"\
-"    if ((local_index & mask) == 0) { \n"\
-"      float other = ftemp[local_index + offset]; \n"\
-"      float mine = ftemp[local_index]; \n"\
-"      ftemp[local_index] = mine + other; \n"\
-"    } \n"\
-"    barrier(CLK_LOCAL_MEM_FENCE); \n"\
-"  } \n"\
-"  if (local_index == 0) { \n"\
-"    freduce[group_index] = ftemp[0]; \n"\
-"  }\n"\
-"} \n"\
-"} \n";
-
-char *szDotProduct4 =
-	"#if BIGFLOAT \n"
-"#if defined(cl_khr_fp64)\n"
-"#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n"
-"#elif defined(cl_amd_fp64)\n"
-"#pragma OPENCL EXTENSION cl_amd_fp64 : enable\n"
-"#endif\n"
-	"#define FLPT double\n"
-	"#define FLPTV double4\n"    
-	"#else\n"
-	"#define FLPT float\n"
-	"#define FLPTV float4\n"
-	"#endif\n"
-"__kernel \n"\
-"void dotproduct4( \n"\
-"            __const int length, \n"\
-"            __global FLPTV* fin, \n"\
-"            __local FLPT* ftemp, \n"\
-"            __global FLPT* freduce){ \n"\
-" \n"\
-"  int global_index = get_global_id(0); \n"\
-"  int local_index = get_local_id(0); \n"\
-"  int local_size = get_local_size(0); \n"\
-"  int group_index = get_group_id(0); \n"\
-"  if (global_index < length) { \n"\
-"  freduce[global_index] = 0.0; \n"\
-"  ftemp[local_index/4] = dot(fin[global_index/4],fin[global_index/4]);  \n"\
-"  barrier(CLK_LOCAL_MEM_FENCE); \n"\
-"  for(int offset = 1; \n"\
-"      offset < local_size/4; \n"\
-"      offset <<= 1) { \n"\
-"    int mask = (offset << 1) - 1; \n"\
-"    if ((local_index & mask) == 0) { \n"\
-"      float other = ftemp[local_index + offset]; \n"\
-"      float mine = ftemp[local_index]; \n"\
-"      ftemp[local_index] = mine + other; \n"\
-"    } \n"\
-"    barrier(CLK_LOCAL_MEM_FENCE); \n"\
-"  } \n"\
-"  if (local_index == 0) { \n"\
-"    freduce[group_index] = ftemp[0]; \n"\
-"  }\n"\
-"} \n"\
-"} \n";
-
-
-
-
-
-
-
 char *szReduce =
 	"#if BIGFLOAT \n"
-"#if defined(cl_khr_fp64)\n"
-"#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n"
-"#elif defined(cl_amd_fp64)\n"
-"#pragma OPENCL EXTENSION cl_amd_fp64 : enable\n"
-"#endif\n"
 	"#define FLPT double\n"
 	"#else\n"
 	"#define FLPT float\n"
@@ -234,11 +122,13 @@ char *szReduce =
 "void reduce( \n"\
 "            __const int length, \n"\
 "            __global FLPT* fin, \n"\
+"            __global FLPT* fout, \n"\
 "            __local FLPT* ftemp, \n"\
 "            __global FLPT* freduce){ \n"\
 " \n"\
 "  int global_index = get_global_id(0); \n"\
 "  int local_index = get_local_id(0); \n"\
+"  int global_size = get_global_size(0); \n"\
 "  int local_size = get_local_size(0); \n"\
 "  int group_index = get_group_id(0); \n"\
 "  if (global_index < length) { \n"\
@@ -262,101 +152,6 @@ char *szReduce =
 "} \n"\
 "} \n";
 
-
-char *szReduce2 =
-	"#if BIGFLOAT \n"
-"#if defined(cl_khr_fp64)\n"
-"#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n"
-"#elif defined(cl_amd_fp64)\n"
-"#pragma OPENCL EXTENSION cl_amd_fp64 : enable\n"
-"#endif\n"
-	"#define FLPT double\n"
-	"#define FLPTV double2\n"    
-	"#else\n"
-	"#define FLPT float\n"
-	"#define FLPTV float2\n"
-	"#endif\n"
-"__kernel \n"\
-"void reduce2( \n"\
-"            __const int length, \n"\
-"            __global FLPTV* fin, \n"\
-"            __local FLPT* ftemp, \n"\
-"            __global FLPT* freduce){ \n"\
-" \n"\
-"  int global_index = get_global_id(0); \n"\
-"  int local_index = get_local_id(0); \n"\
-"  int local_size = get_local_size(0); \n"\
-"  int group_index = get_group_id(0); \n"\
-"  if (global_index < length) { \n"\
-"  freduce[global_index] = 0.0; \n"\
-"  ftemp[local_index/2] = fin[global_index/2].s0 + fin[global_index/2].s1; \n"\
-"  barrier(CLK_LOCAL_MEM_FENCE); \n"\
-"  for(int offset = 1; \n"\
-"      offset < local_size/2; \n"\
-"      offset <<= 1) { \n"\
-"    int mask = (offset << 1) - 1; \n"\
-"    if ((local_index & mask) == 0) { \n"\
-"      float other = ftemp[local_index + offset]; \n"\
-"      float mine = ftemp[local_index]; \n"\
-"      ftemp[local_index] = mine + other; \n"\
-"    } \n"\
-"    barrier(CLK_LOCAL_MEM_FENCE); \n"\
-"  } \n"\
-"  if (local_index == 0) { \n"\
-"    freduce[group_index] = ftemp[0]; \n"\
-"  }\n"\
-"} \n"\
-"} \n";
-
-
-
-
-
-
-char *szReduce4 =
-	"#if BIGFLOAT \n"
-"#if defined(cl_khr_fp64)\n"
-"#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n"
-"#elif defined(cl_amd_fp64)\n"
-"#pragma OPENCL EXTENSION cl_amd_fp64 : enable\n"
-"#endif\n"
-	"#define FLPT double\n"
-	"#define FLPTV double4\n"    
-	"#else\n"
-	"#define FLPT float\n"
-	"#define FLPTV float4\n"
-	"#endif\n"
-"__kernel \n"\
-"void reduce4( \n"\
-"            __const int length, \n"\
-"            __global FLPTV* fin, \n"\
-"            __local FLPT* ftemp, \n"\
-"            __global FLPT* freduce){ \n"\
-" \n"\
-"  int global_index = get_global_id(0); \n"\
-"  int local_index = get_local_id(0); \n"\
-"  int local_size = get_local_size(0); \n"\
-"  int group_index = get_group_id(0); \n"\
-"  if (global_index < length) { \n"\
-"  freduce[global_index] = 0.0; \n"\
-"  ftemp[local_index/4] = fin[global_index/4].s0 + fin[global_index/4].s1 + fin[global_index/4].s2 + fin[global_index/4].s3; \n"\
-"  barrier(CLK_LOCAL_MEM_FENCE); \n"\
-"  for(int offset = 1; \n"\
-"      offset < local_size/4; \n"\
-"      offset <<= 1) { \n"\
-"    int mask = (offset << 1) - 1; \n"\
-"    if ((local_index & mask) == 0) { \n"\
-"      float other = ftemp[local_index + offset]; \n"\
-"      float mine = ftemp[local_index]; \n"\
-"      ftemp[local_index] = mine + other; \n"\
-"    } \n"\
-"    barrier(CLK_LOCAL_MEM_FENCE); \n"\
-"  } \n"\
-"  if (local_index == 0) { \n"\
-"    freduce[group_index] = ftemp[0]; \n"\
-"  }\n"\
-"} \n"\
-"} \n";
 
 
 
@@ -407,12 +202,9 @@ int main(int argc, char *argv[])
 	{
 		bPrint = 1;
 	}
-//    printf("A x %f, %f, %f, %f\n", sumofnumbersmton(1, iGlobalSize), 
-  //      sumofnumbersmton(iGlobalSize + 1, iGlobalSize * 2),
-//sumofnumberssqmton(1, iGlobalSize), 
- //       sumofnumberssqmton(iGlobalSize + 1, iGlobalSize * 2));    
-
- //   printf("The global size is %d, the global work size is %ld, and the local work size is %ld. \n", iGlobalSize, iGlobalWorkSize, iLocalWorkSize);
+    
+    
+    printf("The global size is %d, the global work size is %ld, and the local work size is %ld. \n", iGlobalSize, iGlobalWorkSize, iLocalWorkSize);
     size_t * ipGlobalWorkParam = NULL;
     if (iGlobalWorkSize != -1)
     {
@@ -437,12 +229,11 @@ int main(int argc, char *argv[])
 #else
 	const char *szFloatOpt = NULL;
 #endif
-    const int iNoKernels = 6;
-	char *ourKernelStrings[6] =
-		{ szDotProduct, szDotProduct2, szDotProduct4, szReduce, szReduce2, szReduce4};
+	char *ourKernelStrings[2] =
+		{ szDotProduct, szReduce};
 
 
-  	GPAK *TheGPAK = GPAKSetup(TheGCAQ, iNoKernels, ourKernelStrings, szFloatOpt);
+  	GPAK *TheGPAK = GPAKSetup(TheGCAQ, 2, ourKernelStrings, szFloatOpt);
     if (TheGPAK == NULL)
     {
         GCAQShutdown(TheGCAQ);
@@ -470,8 +261,8 @@ int main(int argc, char *argv[])
     FLPT* outputDataF = (FLPT *) malloc(iGlobalSize * sizeof(FLPT));
     SetFNull(iGlobalSize, outputDataF);
    
-	struct timespec start[iNoKernels];
-	struct timespec end[iNoKernels];
+	struct timespec start[2];
+	struct timespec end[2];
     
 // create buffers for the input and ouput
 
@@ -502,7 +293,7 @@ int main(int argc, char *argv[])
 
     int iRep;
     int iKernel;
-    for (iKernel = 0; iKernel < iNoKernels; iKernel++)
+    for (iKernel = 0; iKernel < 2; iKernel++)
     {    
 		clock_gettime(CLOCK_MONOTONIC, &(start[iKernel]));
 		for (iRep = 0; iRep < iNoReps; iRep++)
@@ -512,9 +303,9 @@ int main(int argc, char *argv[])
         
     clSetKernelArg(TheGPAK->TheKernels[iKernel], 0, sizeof(int), &iGlobalSize);
     clSetKernelArg(TheGPAK->TheKernels[iKernel], 1, sizeof(cl_mem), &inputF);
- //   clSetKernelArg(TheGPAK->TheKernels[iKernel], 2, sizeof(cl_mem), &outputF);
-    clSetKernelArg(TheGPAK->TheKernels[iKernel], 2, iLocalWorkSize * sizeof(float), NULL); // Was 3
-    clSetKernelArg(TheGPAK->TheKernels[iKernel], 3, sizeof(cl_mem), &outputAll); // Was 4         
+    clSetKernelArg(TheGPAK->TheKernels[iKernel], 2, sizeof(cl_mem), &outputF);
+    clSetKernelArg(TheGPAK->TheKernels[iKernel], 3, iLocalWorkSize * sizeof(float), NULL);
+    clSetKernelArg(TheGPAK->TheKernels[iKernel], 4, sizeof(cl_mem), &outputAll);         
    // clSetKernelArg(TheGPAK->TheKernels[iKernel], 4, sizeof(cl_mem), &outputGlID);
   //  clSetKernelArg(TheGPAK->TheKernels[iKernel], 5, sizeof(cl_mem), &outputGSize);
   //  clSetKernelArg(TheGPAK->TheKernels[iKernel], 6, sizeof(cl_mem), &outputLcID);
@@ -522,8 +313,7 @@ int main(int argc, char *argv[])
   //  clSetKernelArg(TheGPAK->TheKernels[iKernel], 8, sizeof(cl_mem), &outputGrID);
   //  clSetKernelArg(TheGPAK->TheKernels[iKernel], 9, sizeof(cl_mem), &outputNGSize);
 //    clSetKernelArg(TheGPAK->TheKernels[iKernel], 10, sizeof(cl_mem), &outputAll);    
-    clEnqueueNDRangeKernel(TheGCAQ->TheQueue, TheGPAK->TheKernels[iKernel], 1,
-            NULL, ipGlobalWorkParam, ipLocalWorkParam, 0, NULL, NULL);
+    clEnqueueNDRangeKernel(TheGCAQ->TheQueue, TheGPAK->TheKernels[iKernel], 1, NULL, ipGlobalWorkParam, ipLocalWorkParam, 0, NULL, NULL);
     clFinish(TheGCAQ->TheQueue);
  
 // copy the results from out of the output buffer
@@ -534,7 +324,7 @@ int main(int argc, char *argv[])
 //    clEnqueueReadBuffer(TheGCAQ->TheQueue, outputLSize, CL_TRUE, 0, iGlobalSize * sizeof(int), outputDataLSize, 0, NULL, NULL);
 //    clEnqueueReadBuffer(TheGCAQ->TheQueue, outputGrID, CL_TRUE, 0, iGlobalSize * sizeof(int), outputDataGrID, 0, NULL, NULL);
 //    clEnqueueReadBuffer(TheGCAQ->TheQueue, outputNGSize, CL_TRUE, 0, iGlobalSize * sizeof(int), outputDataNGSize, 0, NULL, NULL);
-//    clEnqueueReadBuffer(TheGCAQ->TheQueue, outputF, CL_TRUE, 0, iGlobalSize * sizeof(float), outputDataF, 0, NULL, NULL); 
+    clEnqueueReadBuffer(TheGCAQ->TheQueue, outputF, CL_TRUE, 0, iGlobalSize * sizeof(float), outputDataF, 0, NULL, NULL); 
     if (iKernel == 0)
     {
         clEnqueueReadBuffer(TheGCAQ->TheQueue, outputAll, CL_TRUE, 0, iGlobalSize * sizeof(float), outputDataD, 0, NULL, NULL);
@@ -565,7 +355,7 @@ int main(int argc, char *argv[])
     
     for(i=0;i<iGlobalSize; i++)
     {
-        printf("%d - %f - %f\n", i, /*inputDataF[i], */ outputDataD[i], outputDataR[i]);
+        printf("%d - %f - %f - %f\n", i, inputDataF[i], outputDataD[i], outputDataR[i]);
     }
     }
 // cleanup - release OpenCL resources
@@ -579,7 +369,7 @@ int main(int argc, char *argv[])
     GPAKShutdown(TheGPAK);
     GCAQShutdown (TheGCAQ);
     printf("%d - ", iGlobalSize);
-	for (iKernel = 0; iKernel < iNoKernels; iKernel++)
+	for (iKernel = 0; iKernel < 2; iKernel++)
 	{
 		printf("%f - ", (1.0 * TLPERS * iGlobalSize * iNoReps) /
 			   (MEGAHERTZ * timespecDiff(&(end[iKernel]), &(start[iKernel]))));
