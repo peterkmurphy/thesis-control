@@ -124,4 +124,16 @@ FLPT sumofnumbersmton(INTG mvalue, INTG nvalue);
 
 FLPT sumofnumberssqmton(INTG mvalue, INTG nvalue);
 
+// Let's say you've got a "reduction" kernel, and the inputs are of a given size
+// What is the output size going to be, given the size of the workgroups? This
+// function calculates the answer.
+
+INTG ioutsize(INTG iinsize, INTG iworkgroupsize);
+
+// This is for testing for this code. No other purpose/
+
+FLPT * fdotprodexpresult(INTG isizein, INTG iworkgroupsize, FLPT *fvectin);
+FLPT * freduceexpresult(INTG isizein, INTG iworkgroupsize, FLPT *fvectin);
+
+
 #endif // PROJCOMMON_H 

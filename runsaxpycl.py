@@ -15,8 +15,8 @@ if len(sys.argv) >= 3:
     MAXMATSIZE = int(sys.argv[2]);
     NOITERS = str(int(sys.argv[3]));
 else:
-    MINMATSIZE = 8192 #16384;
-    MAXMATSIZE = 8192 #2097152 # Because 4194304 gives problems, let alone 33554432;
+    MINMATSIZE = 16384;
+    MAXMATSIZE = 2097152 # Because 4194304 gives problems, let alone 33554432;
     NOITERS = "20";
 
 # Now we try out the executables.

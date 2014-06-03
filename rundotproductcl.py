@@ -18,8 +18,8 @@ if len(sys.argv) >= 3:
     NOITERS = str(int(sys.argv[3]));
 else:
     MINMATSIZE =  256;
-    MAXMATSIZE = 33554432;
-    NOITERS = "100";
+    MAXMATSIZE = 2097152 #33554432;
+    NOITERS = "20";
 
 # Now we try out the executables.
 
@@ -30,7 +30,7 @@ for k in ["3"]: #EFF_OPTIONS:
         print ourFile;
         while i <= MAXMATSIZE:
            # subprocess.call([ourFile, str(i - 1), NOITERS]);
-            subprocess.call([ourFile, str(i), NOITERS, str(i), "256"]);
+            subprocess.call([ourFile, str(i), NOITERS]);
            # subprocess.call([ourFile, str(i + 1), NOITERS]);
             i *= 2;
 

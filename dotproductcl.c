@@ -27,18 +27,18 @@ char *szDotProduct =
 "void dotproduct( \n"\
 "            __const int length, \n"\
 "            __global FLPT* fin, \n"\
+"            __global FLPT* fotherin, \n"\
 "            __global FLPT* fout, \n"\
 "            __local FLPT* ftemp, \n"\
 "            __global FLPT* freduce){ \n"\
 " \n"\
 "  int global_index = get_global_id(0); \n"\
 "  int local_index = get_local_id(0); \n"\
-"  int global_size = get_global_size(0); \n"\
 "  int local_size = get_local_size(0); \n"\
 "  int group_index = get_group_id(0); \n"\
 "  if (global_index < length) { \n"\
 "  freduce[global_index] = 0.0; \n"\
-"  ftemp[local_index] = fin[global_index] * fin[global_index];  \n"\
+"  ftemp[local_index] = fin[global_index] * fotherin[global_index];  \n"\
 "  barrier(CLK_LOCAL_MEM_FENCE); \n"\
 "  for(int offset = 1; \n"\
 "      offset < local_size; \n"\
@@ -74,7 +74,6 @@ char *szReduce =
 " \n"\
 "  int global_index = get_global_id(0); \n"\
 "  int local_index = get_local_id(0); \n"\
-"  int global_size = get_global_size(0); \n"\
 "  int local_size = get_local_size(0); \n"\
 "  int group_index = get_group_id(0); \n"\
 "  if (global_index < length) { \n"\
@@ -127,39 +126,6 @@ int main(int argc, char *argv[])
 		bPrint = 1;
 	}    
     
-/*    
-    int iCheck3, iCheck4;    
-    size_t iGlobalWorkSize = -1;
-    if (argc > 3) // Global work size
-    {
-        iCheck3 = atoi(argv[3]);
-        if (iCheck3 != 0)
-        {
-            iGlobalWorkSize = iCheck3;
-        }
-    }
-    if (argc > 4) // Local work size
-    {
-        iCheck4 = atoi(argv[4]);
-        if (iCheck4 != 0)
-        {
-            iLocalWorkSize = iCheck4;
-        }
-    } 
-    
-    printf("The global size is %d, the global work size is %ld, and the local work size is %ld. \n", iGlobalSize, iGlobalWorkSize, iLocalWorkSize);
-    size_t * ipGlobalWorkParam = NULL;
-    if (iGlobalWorkSize != -1)
-    {
-        ipGlobalWorkParam = &iGlobalWorkSize;
-    }
-    
-    size_t * ipLocalWorkParam = NULL;
-    if (iLocalWorkSize != -1)
-    {
-        ipLocalWorkParam = &iLocalWorkSize;
-    }
-*/  
     
     GCAQ * TheGCAQ = GCAQSetup();
     if (TheGCAQ == NULL)
@@ -185,11 +151,12 @@ int main(int argc, char *argv[])
         return 2;
     }
 
- 
+    FLPT* inputDataFirst = (FLPT *) malloc(iGlobalSize * sizeof(FLPT));
+    SetFIncrease(iGlobalSize, inputDataFirst);
     
-
-    FLPT* inputDataF = (FLPT *) malloc(iGlobalSize * sizeof(FLPT));
-    SetFIncrease(iGlobalSize, inputDataF);
+    FLPT* inputDataSecond = (FLPT *) malloc(iGlobalSize * sizeof(FLPT));
+    SetFIncrease(iGlobalSize, inputDataSecond);
+    
     
     // For the dot product.
     
@@ -202,7 +169,6 @@ int main(int argc, char *argv[])
     SetFNull(iGlobalSize, outputDataR);
     
     
-    
     FLPT* outputDataF = (FLPT *) malloc(iGlobalSize * sizeof(FLPT));
     SetFNull(iGlobalSize, outputDataF);
    
@@ -212,29 +178,37 @@ int main(int argc, char *argv[])
 // create buffers for the input and ouput
 
     int err; 
-    cl_mem inputF, outputF, outputAll;
-    inputF = clCreateBuffer(TheGCAQ->TheContext, CL_MEM_READ_ONLY, iGlobalSize * sizeof(FLPT), NULL, &err);
+    cl_mem inputFirst, inputSecond, outputF, outputAll;
+    inputFirst = clCreateBuffer(TheGCAQ->TheContext, CL_MEM_READ_ONLY, 
+        iGlobalSize * sizeof(FLPT), NULL, &err);
     if (err != CL_SUCCESS)
     {
         printf("Error allocating for F");
         return 3;
     }
+
+    inputSecond = clCreateBuffer(TheGCAQ->TheContext, CL_MEM_READ_ONLY, 
+        iGlobalSize * sizeof(FLPT), NULL, &err);
+    if (err != CL_SUCCESS)
+    {
+        printf("Error allocating for F");
+        return 4;
+    }
     
-    
-    outputF = clCreateBuffer(TheGCAQ->TheContext, CL_MEM_WRITE_ONLY, iGlobalSize * sizeof(float), NULL, &err);
+    outputF = clCreateBuffer(TheGCAQ->TheContext, CL_MEM_WRITE_ONLY, 
+        iGlobalSize * sizeof(float), NULL, &err);
     if (err != CL_SUCCESS)
     {
         printf("Error allocating for output 7");
         return 9;
     }
-    outputAll = clCreateBuffer(TheGCAQ->TheContext, CL_MEM_WRITE_ONLY, iGlobalSize * sizeof(float), NULL, &err);
+    outputAll = clCreateBuffer(TheGCAQ->TheContext, CL_MEM_WRITE_ONLY, 
+        iGlobalSize * sizeof(float), NULL, &err);
     if (err != CL_SUCCESS)
     {
         printf("Error allocating for output 8");
         return 9;
     }
-
-    clEnqueueWriteBuffer(TheGCAQ->TheQueue, inputF, CL_TRUE, 0, iGlobalSize * sizeof(FLPT), inputDataF, 0, NULL, NULL);
 
     int iRep; // Used for repetitions.
     int iKernel; // Used for counting the kernels used.
@@ -245,14 +219,32 @@ int main(int argc, char *argv[])
     {    
 		size_t iLocalWorkSize = TheGPAK->TheMaxWorkGroupSizes[iKernel]; // Different but same.
         size_t iWorkGroupSize = TheGPAK->TheMaxWorkGroupSizes[iKernel]; // Same but different
+        int isReduct = iKernel % 2; // 0 for dot products, 1 for reduction 
         clock_gettime(CLOCK_MONOTONIC, &(start[iKernel]));
 		for (iRep = 0; iRep < iNoReps; iRep++)
 		{
+            clEnqueueWriteBuffer(TheGCAQ->TheQueue, inputFirst, CL_TRUE, 0, 
+                iGlobalSize * sizeof(FLPT), inputDataFirst, 0, NULL, NULL);
+            if (isReduct == 0)
+            {
+                clEnqueueWriteBuffer(TheGCAQ->TheQueue, inputSecond, CL_TRUE, 0, 
+                    iGlobalSize * sizeof(FLPT), inputDataFirst, 0, NULL, NULL); 
+            }
             clSetKernelArg(TheGPAK->TheKernels[iKernel], 0, sizeof(int), &iGlobalSize);
-            clSetKernelArg(TheGPAK->TheKernels[iKernel], 1, sizeof(cl_mem), &inputF);
-            clSetKernelArg(TheGPAK->TheKernels[iKernel], 2, sizeof(cl_mem), &outputF);
-            clSetKernelArg(TheGPAK->TheKernels[iKernel], 3, iLocalWorkSize * sizeof(float), NULL);
-            clSetKernelArg(TheGPAK->TheKernels[iKernel], 4, sizeof(cl_mem), &outputAll);         
+            clSetKernelArg(TheGPAK->TheKernels[iKernel], 1, sizeof(cl_mem), &inputFirst);
+            if (isReduct == 0)
+            {
+                clSetKernelArg(TheGPAK->TheKernels[iKernel], 2, sizeof(cl_mem), &inputSecond);
+                clSetKernelArg(TheGPAK->TheKernels[iKernel], 3, sizeof(cl_mem), &outputF);
+                clSetKernelArg(TheGPAK->TheKernels[iKernel], 4, iLocalWorkSize * sizeof(float), NULL);
+                clSetKernelArg(TheGPAK->TheKernels[iKernel], 5, sizeof(cl_mem), &outputAll);  
+            }
+            else
+            {
+                clSetKernelArg(TheGPAK->TheKernels[iKernel], 2, sizeof(cl_mem), &outputF);
+                clSetKernelArg(TheGPAK->TheKernels[iKernel], 3, iLocalWorkSize * sizeof(float), NULL);
+                clSetKernelArg(TheGPAK->TheKernels[iKernel], 4, sizeof(cl_mem), &outputAll);                  
+            }
             clEnqueueNDRangeKernel(TheGCAQ->TheQueue, TheGPAK->TheKernels[iKernel], 1, NULL, 
                 &iNoWorkGroups, &iWorkGroupSize, 0, NULL, NULL);
             clFinish(TheGCAQ->TheQueue);
@@ -273,7 +265,8 @@ int main(int argc, char *argv[])
     }
 
 
-    clReleaseMemObject(inputF);
+    clReleaseMemObject(inputFirst);
+    clReleaseMemObject(inputSecond);
     clReleaseMemObject(outputF);
     clReleaseMemObject(outputAll);
     
@@ -285,13 +278,13 @@ int main(int argc, char *argv[])
         printf("output %d: \n", iGlobalSize);
         for(i=0;i<iGlobalSize; i++)
         {
-            printf("%d - %f - %f - %f\n", i, inputDataF[i], outputDataD[i], outputDataR[i]);
+            printf("%d - %f - %f - %f\n", i, inputDataFirst[i], outputDataD[i], outputDataR[i]);
         }
     }
 // cleanup - release OpenCL resources
     
-    
-    free(inputDataF);
+    free(inputDataFirst);
+    free(inputDataSecond);
     free(outputDataF);
     free(outputDataD);
     free(outputDataR);

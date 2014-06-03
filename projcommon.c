@@ -165,7 +165,35 @@ FLPT sumofnumberssqmton(INTG mvalue, INTG nvalue)
     return outresult;
 }    
 
+INTG ioutsize(INTG iinsize, INTG iworkgroupsize)
+{
+    return ((iinsize - 1) / iworkgroupsize) + 1;
+}
 
+// This is for testing for this code. No other purpose/
 
+FLPT * fdotprodexpresult(INTG isizein, INTG iworkgroupsize, FLPT *fvectin)
+{
+    INTG ioutexpsize = ioutsize(isizein, iworkgroupsize);
+    INTG iiter;
+    for (iiter = 0; iiter < ioutexpsize; iiter++)
+    {
+        fvectin[iiter] = sumofnumberssqmton((iiter * iworkgroupsize) + 1,
+            (iiter + 1) * iworkgroupsize);
+    }
+    return fvectin;
+}
+    
+FLPT * freduceexpresult(INTG isizein, INTG iworkgroupsize, FLPT *fvectin)
+{
+    INTG ioutexpsize = ioutsize(isizein, iworkgroupsize);
+    INTG iiter;
+    for (iiter = 0; iiter < ioutexpsize; iiter++)
+    {
+        fvectin[iiter] = sumofnumbersmton((iiter * iworkgroupsize) + 1,
+            (iiter + 1) * iworkgroupsize);
+    }
+    return fvectin;
+}
 
 
