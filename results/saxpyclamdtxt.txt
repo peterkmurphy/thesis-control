@@ -1,0 +1,72 @@
+Data file for SAXPY on OpenCL with 1000 repetitions
+(No compiler optimisations, single precision AMD)
+python -u "runsaxpycl.py"
+./timesaxpy/saxpycl0
+16384 - 32.228975 - 19.202570 - 43.210960 - 42.295082 - 39.373395 - 
+32768 - 43.904766 - 26.688818 - 45.724939 - 45.923231 - 50.980633 - 
+65536 - 89.125954 - 38.868024 - 96.267314 - 96.331863 - 96.201959 - 
+131072 - 120.052417 - 42.605096 - 136.439648 - 137.270367 - 134.689401 - 
+262144 - 151.265543 - 50.827018 - 176.447394 - 176.133404 - 175.425537 - 
+524288 - 171.543376 - 72.833437 - 206.899428 - 207.672649 - 207.414855 - 
+1048576 - 191.044705 - 106.718050 - 227.618063 - 227.997254 - 227.541567 - 
+2097152 - 204.582131 - 113.161456 - 244.685690 - 244.512425 - 244.082572 - 
+A problem at kernel 0 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 1 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 2 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 3 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 4 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+4194304 - 214.743615 - 121.745262 - 258.648890 - 258.549327 - 258.031205 - 
+A problem at kernel 0 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 1 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 2 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 3 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 4 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+8388608 - 219.327078 - 126.368820 - 265.707076 - 265.743786 - 263.902745 - 
+A problem at kernel 0 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 1 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 2 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 3 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 4 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+16777216 - 221.808048 - 128.841498 - 268.896600 - 268.908379 - 268.243816 - 
+A problem at kernel 0 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 1 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 2 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 3 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 4 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+33554432 - 246.163493 - 144.809182 - 301.365900 - 283.775301 - 300.104537 - 
+
+For comparison, here's 10 reps of loop unrolling level 3.
+
+./timesaxpy/mpursaxpycl3
+16384 - 36.478482 - 17.278164 - 26.533949 - 27.007665 - 25.246552 - 
+32768 - 37.668559 - 26.036918 - 34.960152 - 44.765168 - 36.147263 - 
+65536 - 64.529202 - 33.915683 - 83.525858 - 91.220843 - 97.267079 - 
+131072 - 94.256015 - 40.717876 - 145.186719 - 147.421618 - 138.747791 - 
+262144 - 133.772526 - 51.673139 - 172.312781 - 182.719364 - 176.717718 - 
+524288 - 172.082352 - 72.909135 - 204.290654 - 203.728492 - 209.473342 - 
+1048576 - 174.920124 - 101.943730 - 228.719773 - 234.142924 - 229.758208 - 
+2097152 - 179.618572 - 113.537747 - 256.161474 - 242.601946 - 240.691871 - 
+A problem at kernel 0 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 1 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 2 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 3 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 4 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+4194304 - 196.695798 - 122.618773 - 252.647693 - 260.387905 - 257.188849 - 
+A problem at kernel 0 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 1 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 2 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 3 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 4 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+8388608 - 200.758079 - 126.046161 - 262.898576 - 264.674751 - 266.586990 - 
+A problem at kernel 0 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 1 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 2 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 3 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 4 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+16777216 - 203.410931 - 128.814514 - 267.821563 - 266.492415 - 266.815450 - 
+A problem at kernel 0 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 1 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 2 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 3 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+A problem at kernel 4 and iteration 2917778 for actual value 67108912.000000 but expected value 67108920.000000!
+33554432 - 214.807044 - 137.231993 - 303.397136 - 303.276163 - 302.497741 - 

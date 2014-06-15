@@ -1,0 +1,283 @@
+./diagmatrixcl/mpurdiagmatrixcl3
+256 - 1 - 10 - 0.454446 - 0.627906 - 0.723020 - 0.644219 - 0.507326 - 0.545479 - 0.622455 - 0.490501 - 0.520248 - 0.508809 - 0.777484 - 
+A problem at kernel 7 and iteration 16 for actual value 2.000000 but expected value 3.000000!
+A problem at kernel 8 and iteration 16 for actual value 2.000000 but expected value 3.000000!
+256 - 3 - 10 - 1.321376 - 1.737090 - 2.163659 - 1.956693 - 1.840579 - 0.999032 - 0.911583 - 1.656542 - 2.313539 - 1.978804 - 2.485144 - 
+A problem at kernel 1 and iteration 0 for actual value 2.000000 but expected value 3.000000!
+A problem at kernel 4 and iteration 16 for actual value 4.000000 but expected value 5.000000!
+A problem at kernel 7 and iteration 255 for actual value -nan but expected value 3.000000!
+A problem at kernel 8 and iteration 255 for actual value -nan but expected value 3.000000!
+256 - 5 - 10 - 2.955842 - 2.706580 - 2.665516 - 2.622217 - 2.288444 - 2.434813 - 2.793896 - 1.987477 - 2.718322 - 2.174366 - 2.570287 - 
+A problem at kernel 1 and iteration 0 for actual value 4.000000 but expected value 5.000000!
+A problem at kernel 3 and iteration 0 for actual value 4.000000 but expected value 5.000000!
+A problem at kernel 4 and iteration 0 for actual value 3.000000 but expected value 5.000000!
+A problem at kernel 7 and iteration 0 for actual value 4.000000 but expected value 5.000000!
+A problem at kernel 8 and iteration 0 for actual value 4.000000 but expected value 5.000000!
+A problem at kernel 9 and iteration 0 for actual value 4.000000 but expected value 5.000000!
+A problem at kernel 10 and iteration 0 for actual value 4.000000 but expected value 5.000000!
+256 - 9 - 10 - 4.086672 - 3.911361 - 5.171838 - 4.267381 - 3.933171 - 4.434341 - 5.123270 - 2.688759 - 4.564522 - 4.251611 - 7.658042 - 
+A problem at kernel 1 and iteration 0 for actual value 5.000000 but expected value 14.000000!
+A problem at kernel 3 and iteration 8 for actual value 21.000000 but expected value 22.000000!
+A problem at kernel 4 and iteration 0 for actual value 7.000000 but expected value 14.000000!
+A problem at kernel 7 and iteration 0 for actual value 8.000000 but expected value 14.000000!
+A problem at kernel 8 and iteration 0 for actual value 8.000000 but expected value 14.000000!
+A problem at kernel 9 and iteration 64 for actual value 26.000000 but expected value 27.000000!
+A problem at kernel 10 and iteration 64 for actual value 26.000000 but expected value 27.000000!
+256 - 27 - 10 - 11.908460 - 3.564864 - 7.721037 - 7.153858 - 5.131314 - 8.083332 - 10.697213 - 3.242297 - 9.503229 - 6.153870 - 9.312644 - 
+512 - 1 - 10 - 0.767511 - 1.049607 - 1.197266 - 1.059955 - 0.983632 - 1.127768 - 1.839822 - 1.322081 - 1.763200 - 1.503193 - 1.688669 - 
+A problem at kernel 1 and iteration 32 for actual value 2.000000 but expected value 3.000000!
+A problem at kernel 4 and iteration 80 for actual value 2.000000 but expected value 3.000000!
+A problem at kernel 7 and iteration 0 for actual value 1.000000 but expected value 2.000000!
+A problem at kernel 8 and iteration 0 for actual value 1.000000 but expected value 2.000000!
+512 - 3 - 10 - 2.243129 - 2.226717 - 2.302125 - 2.363177 - 2.216562 - 2.098111 - 2.509937 - 1.968211 - 2.173412 - 1.959670 - 2.165194 - 
+A problem at kernel 1 and iteration 0 for actual value 1.000000 but expected value 3.000000!
+A problem at kernel 3 and iteration 80 for actual value 4.000000 but expected value 5.000000!
+A problem at kernel 4 and iteration 0 for actual value 1.000000 but expected value 3.000000!
+A problem at kernel 7 and iteration 0 for actual value 2.000000 but expected value 3.000000!
+A problem at kernel 8 and iteration 0 for actual value 2.000000 but expected value 3.000000!
+A problem at kernel 9 and iteration 384 for actual value 4.000000 but expected value 5.000000!
+A problem at kernel 10 and iteration 384 for actual value 4.000000 but expected value 5.000000!
+512 - 5 - 10 - 6.043216 - 4.815174 - 7.057934 - 5.603636 - 4.971326 - 5.619890 - 6.298983 - 3.758578 - 3.317332 - 2.598305 - 4.437013 - 
+A problem at kernel 1 and iteration 0 for actual value 3.000000 but expected value 5.000000!
+A problem at kernel 3 and iteration 252 for actual value 8.000000 but expected value 9.000000!
+A problem at kernel 4 and iteration 0 for actual value 4.000000 but expected value 5.000000!
+A problem at kernel 7 and iteration 0 for actual value 3.000000 but expected value 5.000000!
+A problem at kernel 8 and iteration 0 for actual value 3.000000 but expected value 5.000000!
+A problem at kernel 9 and iteration 384 for actual value 8.000000 but expected value 9.000000!
+A problem at kernel 10 and iteration 384 for actual value 8.000000 but expected value 9.000000!
+512 - 9 - 10 - 11.290509 - 6.494758 - 12.029378 - 9.854069 - 8.657434 - 11.611935 - 12.580780 - 5.348996 - 9.067460 - 6.731043 - 7.005534 - 
+A problem at kernel 1 and iteration 0 for actual value 4.000000 but expected value 14.000000!
+A problem at kernel 3 and iteration 292 for actual value 26.000000 but expected value 27.000000!
+A problem at kernel 4 and iteration 0 for actual value 5.000000 but expected value 14.000000!
+A problem at kernel 7 and iteration 0 for actual value 8.000000 but expected value 14.000000!
+A problem at kernel 8 and iteration 0 for actual value 8.000000 but expected value 14.000000!
+512 - 27 - 10 - 20.097113 - 4.855926 - 12.799553 - 11.525967 - 8.134181 - 14.811308 - 22.047323 - 4.193246 - 25.094144 - 13.325680 - 25.074744 - 
+1024 - 1 - 10 - 1.081700 - 1.001010 - 1.613762 - 1.492593 - 1.486961 - 3.099224 - 3.694234 - 2.325687 - 3.498973 - 2.912994 - 3.328990 - 
+A problem at kernel 1 and iteration 0 for actual value 1.000000 but expected value 2.000000!
+A problem at kernel 3 and iteration 79 for actual value 2.000000 but expected value 3.000000!
+A problem at kernel 4 and iteration 0 for actual value 1.000000 but expected value 2.000000!
+A problem at kernel 7 and iteration 0 for actual value 1.000000 but expected value 2.000000!
+A problem at kernel 8 and iteration 0 for actual value 1.000000 but expected value 2.000000!
+A problem at kernel 9 and iteration 79 for actual value 2.000000 but expected value 3.000000!
+A problem at kernel 10 and iteration 79 for actual value 2.000000 but expected value 3.000000!
+1024 - 3 - 10 - 5.596951 - 5.480822 - 7.883001 - 6.416714 - 5.864470 - 5.964071 - 7.277641 - 4.677862 - 6.772629 - 5.474993 - 6.539149 - 
+A problem at kernel 1 and iteration 0 for actual value 1.000000 but expected value 3.000000!
+A problem at kernel 3 and iteration 0 for actual value 2.000000 but expected value 3.000000!
+A problem at kernel 4 and iteration 0 for actual value 2.000000 but expected value 3.000000!
+A problem at kernel 7 and iteration 0 for actual value 2.000000 but expected value 3.000000!
+A problem at kernel 8 and iteration 0 for actual value 2.000000 but expected value 3.000000!
+A problem at kernel 9 and iteration 896 for actual value 4.000000 but expected value 5.000000!
+A problem at kernel 10 and iteration 896 for actual value 4.000000 but expected value 5.000000!
+1024 - 5 - 10 - 11.527092 - 8.877439 - 13.964580 - 10.669845 - 8.227917 - 10.100950 - 10.713397 - 6.152695 - 10.119881 - 6.938595 - 8.483331 - 
+A problem at kernel 1 and iteration 0 for actual value 2.000000 but expected value 5.000000!
+A problem at kernel 3 and iteration 768 for actual value 8.000000 but expected value 9.000000!
+A problem at kernel 4 and iteration 0 for actual value 4.000000 but expected value 5.000000!
+A problem at kernel 7 and iteration 0 for actual value 4.000000 but expected value 5.000000!
+A problem at kernel 8 and iteration 0 for actual value 4.000000 but expected value 5.000000!
+1024 - 9 - 10 - 18.792569 - 9.629134 - 19.077068 - 12.732882 - 11.061040 - 12.897702 - 14.353423 - 4.765829 - 14.177345 - 15.015583 - 27.644155 - 
+A problem at kernel 1 and iteration 0 for actual value 18.000000 but expected value 14.000000!
+A problem at kernel 2 and iteration 896 for actual value 25.000000 but expected value 27.000000!
+A problem at kernel 3 and iteration 3 for actual value 16.000000 but expected value 17.000000!
+A problem at kernel 4 and iteration 499 for actual value 26.000000 but expected value 27.000000!
+A problem at kernel 7 and iteration 1018 for actual value -nan but expected value 19.000000!
+A problem at kernel 8 and iteration 1018 for actual value -nan but expected value 19.000000!
+A problem at kernel 9 and iteration 243 for actual value 26.000000 but expected value 27.000000!
+A problem at kernel 10 and iteration 243 for actual value 26.000000 but expected value 27.000000!
+1024 - 27 - 10 - 30.146963 - 5.195151 - 18.520634 - 15.914960 - 11.378047 - 15.595876 - 39.288962 - 4.915606 - 37.533258 - 15.861102 - 54.397955 - 
+2048 - 1 - 10 - 3.258826 - 4.630205 - 6.889056 - 5.298142 - 3.218717 - 3.628457 - 3.895711 - 2.993514 - 1.713226 - 2.450939 - 2.923171 - 
+A problem at kernel 1 and iteration 31 for actual value 2.000000 but expected value 3.000000!
+A problem at kernel 3 and iteration 47 for actual value 2.000000 but expected value 3.000000!
+A problem at kernel 4 and iteration 31 for actual value 2.000000 but expected value 3.000000!
+A problem at kernel 7 and iteration 31 for actual value 2.000000 but expected value 3.000000!
+A problem at kernel 8 and iteration 31 for actual value 2.000000 but expected value 3.000000!
+2048 - 3 - 10 - 12.121468 - 10.470355 - 13.458847 - 12.422124 - 11.042368 - 12.689632 - 14.493940 - 8.440660 - 13.838212 - 10.671146 - 13.109843 - 
+A problem at kernel 0 and iteration 206 for actual value 4.000000 but expected value 5.000000!
+A problem at kernel 3 and iteration 1582 for actual value 4.000000 but expected value 5.000000!
+A problem at kernel 4 and iteration 1712 for actual value 4.000000 but expected value 5.000000!
+A problem at kernel 7 and iteration 2047 for actual value -nan but expected value 3.000000!
+A problem at kernel 8 and iteration 2047 for actual value -nan but expected value 3.000000!
+2048 - 5 - 10 - 12.803284 - 10.180586 - 14.714957 - 12.708672 - 11.580399 - 13.237000 - 16.790059 - 8.787234 - 15.388661 - 11.223919 - 14.635802 - 
+A problem at kernel 0 and iteration 284 for actual value 8.000000 but expected value 9.000000!
+A problem at kernel 1 and iteration 0 for actual value 7.000000 but expected value 5.000000!
+A problem at kernel 2 and iteration 1920 for actual value 8.000000 but expected value 9.000000!
+A problem at kernel 3 and iteration 316 for actual value 8.000000 but expected value 9.000000!
+A problem at kernel 4 and iteration 1536 for actual value 7.000000 but expected value 9.000000!
+A problem at kernel 5 and iteration 204 for actual value 8.000000 but expected value 9.000000!
+A problem at kernel 6 and iteration 204 for actual value 8.000000 but expected value 9.000000!
+A problem at kernel 7 and iteration 2045 for actual value -nan but expected value 7.000000!
+A problem at kernel 8 and iteration 2045 for actual value -nan but expected value 7.000000!
+A problem at kernel 9 and iteration 1804 for actual value 8.000000 but expected value 9.000000!
+A problem at kernel 10 and iteration 1804 for actual value 8.000000 but expected value 9.000000!
+2048 - 9 - 10 - 21.750405 - 9.282460 - 22.040267 - 20.383712 - 16.809154 - 22.637669 - 28.099746 - 9.309276 - 25.756417 - 16.352471 - 25.502806 - 
+A problem at kernel 0 and iteration 163 for actual value 26.000000 but expected value 27.000000!
+A problem at kernel 1 and iteration 1141 for actual value 26.000000 but expected value 27.000000!
+A problem at kernel 2 and iteration 115 for actual value 26.000000 but expected value 27.000000!
+A problem at kernel 3 and iteration 275 for actual value 26.000000 but expected value 27.000000!
+A problem at kernel 4 and iteration 211 for actual value 26.000000 but expected value 27.000000!
+A problem at kernel 5 and iteration 371 for actual value 26.000000 but expected value 27.000000!
+A problem at kernel 6 and iteration 371 for actual value 26.000000 but expected value 27.000000!
+A problem at kernel 7 and iteration 2042 for actual value -nan but expected value 19.000000!
+A problem at kernel 8 and iteration 2042 for actual value -nan but expected value 19.000000!
+A problem at kernel 9 and iteration 243 for actual value 26.000000 but expected value 27.000000!
+A problem at kernel 10 and iteration 243 for actual value 26.000000 but expected value 27.000000!
+2048 - 27 - 10 - 36.308366 - 5.848323 - 23.178563 - 14.892362 - 10.750325 - 36.388947 - 88.957372 - 5.438292 - 41.260271 - 14.587028 - 79.785634 - 
+4096 - 1 - 10 - 6.010962 - 5.098686 - 6.093319 - 6.097694 - 10.161192 - 12.273086 - 13.874507 - 7.566233 - 13.506722 - 10.212615 - 11.768678 - 
+A problem at kernel 1 and iteration 47 for actual value 2.000000 but expected value 3.000000!
+A problem at kernel 7 and iteration 31 for actual value 2.000000 but expected value 3.000000!
+A problem at kernel 8 and iteration 31 for actual value 2.000000 but expected value 3.000000!
+4096 - 3 - 10 - 25.726085 - 13.807226 - 22.366547 - 17.403078 - 15.525215 - 16.659829 - 20.183213 - 10.448765 - 17.163109 - 13.825163 - 16.681840 - 
+A problem at kernel 1 and iteration 1023 for actual value 4.000000 but expected value 5.000000!
+A problem at kernel 3 and iteration 254 for actual value 4.000000 but expected value 5.000000!
+A problem at kernel 7 and iteration 0 for actual value 2.000000 but expected value 3.000000!
+A problem at kernel 8 and iteration 0 for actual value 2.000000 but expected value 3.000000!
+A problem at kernel 9 and iteration 3934 for actual value 4.000000 but expected value 5.000000!
+A problem at kernel 10 and iteration 3934 for actual value 4.000000 but expected value 5.000000!
+4096 - 5 - 10 - 27.366344 - 14.326946 - 24.507021 - 21.542094 - 20.456827 - 25.975508 - 30.612260 - 12.524362 - 29.344279 - 20.477526 - 28.397978 - 
+A problem at kernel 1 and iteration 1020 for actual value 8.000000 but expected value 9.000000!
+A problem at kernel 2 and iteration 252 for actual value 8.000000 but expected value 9.000000!
+A problem at kernel 3 and iteration 252 for actual value 8.000000 but expected value 9.000000!
+A problem at kernel 4 and iteration 3596 for actual value 8.000000 but expected value 9.000000!
+A problem at kernel 7 and iteration 4093 for actual value -nan but expected value 7.000000!
+A problem at kernel 8 and iteration 4093 for actual value -nan but expected value 7.000000!
+A problem at kernel 9 and iteration 252 for actual value 8.000000 but expected value 9.000000!
+A problem at kernel 10 and iteration 252 for actual value 8.000000 but expected value 9.000000!
+4096 - 9 - 10 - 20.606792 - 11.334288 - 31.773479 - 28.493847 - 22.346432 - 40.868174 - 60.341029 - 11.629101 - 55.948021 - 26.590722 - 55.807954 - 
+A problem at kernel 1 and iteration 0 for actual value 19.000000 but expected value 14.000000!
+A problem at kernel 2 and iteration 131 for actual value 26.000000 but expected value 27.000000!
+A problem at kernel 3 and iteration 243 for actual value 26.000000 but expected value 27.000000!
+A problem at kernel 4 and iteration 499 for actual value 26.000000 but expected value 27.000000!
+A problem at kernel 7 and iteration 179 for actual value 26.000000 but expected value 27.000000!
+A problem at kernel 8 and iteration 179 for actual value 26.000000 but expected value 27.000000!
+A problem at kernel 9 and iteration 243 for actual value 26.000000 but expected value 27.000000!
+A problem at kernel 10 and iteration 243 for actual value 26.000000 but expected value 27.000000!
+4096 - 27 - 10 - 45.941202 - 4.937098 - 26.793852 - 14.351256 - 8.049460 - 44.292612 - 149.195742 - 5.220704 - 137.625262 - 14.916851 - 79.976159 - 
+8192 - 1 - 10 - 13.834685 - 10.185727 - 15.804652 - 13.460273 - 11.770164 - 12.730084 - 14.893885 - 10.151326 - 23.554992 - 12.146157 - 16.403510 - 
+A problem at kernel 9 and iteration 15 for actual value 2.000000 but expected value 3.000000!
+A problem at kernel 10 and iteration 15 for actual value 2.000000 but expected value 3.000000!
+8192 - 3 - 10 - 42.892523 - 14.367671 - 31.999204 - 27.595270 - 19.917127 - 28.462975 - 33.769351 - 13.064630 - 32.406802 - 23.391630 - 30.537713 - 
+A problem at kernel 1 and iteration 1022 for actual value 4.000000 but expected value 5.000000!
+A problem at kernel 3 and iteration 254 for actual value 4.000000 but expected value 5.000000!
+A problem at kernel 7 and iteration 8191 for actual value -nan but expected value 3.000000!
+A problem at kernel 8 and iteration 8191 for actual value -nan but expected value 3.000000!
+A problem at kernel 9 and iteration 270 for actual value 4.000000 but expected value 5.000000!
+A problem at kernel 10 and iteration 270 for actual value 4.000000 but expected value 5.000000!
+8192 - 5 - 10 - 44.208765 - 11.906683 - 41.742109 - 33.034445 - 21.667420 - 45.286690 - 61.170693 - 11.653402 - 57.236233 - 31.079248 - 59.284562 - 
+A problem at kernel 1 and iteration 7168 for actual value 3.000000 but expected value 9.000000!
+A problem at kernel 3 and iteration 252 for actual value 8.000000 but expected value 9.000000!
+A problem at kernel 4 and iteration 508 for actual value 8.000000 but expected value 9.000000!
+A problem at kernel 7 and iteration 1020 for actual value 8.000000 but expected value 9.000000!
+A problem at kernel 8 and iteration 1020 for actual value 8.000000 but expected value 9.000000!
+A problem at kernel 9 and iteration 252 for actual value 8.000000 but expected value 9.000000!
+A problem at kernel 10 and iteration 252 for actual value 8.000000 but expected value 9.000000!
+8192 - 9 - 10 - 63.132531 - 9.101212 - 47.381946 - 30.891725 - 18.522507 - 59.690211 - 107.829894 - 9.003025 - 71.176823 - 30.196983 - 96.953987 - 
+A problem at kernel 1 and iteration 4083 for actual value 26.000000 but expected value 27.000000!
+A problem at kernel 3 and iteration 243 for actual value 26.000000 but expected value 27.000000!
+A problem at kernel 4 and iteration 499 for actual value 26.000000 but expected value 27.000000!
+A problem at kernel 7 and iteration 1011 for actual value 26.000000 but expected value 27.000000!
+A problem at kernel 8 and iteration 1011 for actual value 26.000000 but expected value 27.000000!
+A problem at kernel 9 and iteration 243 for actual value 26.000000 but expected value 27.000000!
+A problem at kernel 10 and iteration 243 for actual value 26.000000 but expected value 27.000000!
+8192 - 27 - 10 - 51.030103 - 5.468984 - 28.617599 - 15.214648 - 9.193917 - 50.554679 - 246.413763 - 5.200458 - 231.411170 - 15.503991 - 230.416777 - 
+16384 - 1 - 10 - 20.475380 - 11.207774 - 21.443502 - 20.029061 - 16.881174 - 19.159859 - 20.951176 - 11.089214 - 20.547385 - 17.666761 - 20.955121 - 
+16384 - 3 - 10 - 66.814391 - 16.155863 - 48.867265 - 40.993803 - 26.447146 - 54.073565 - 72.818231 - 14.955815 - 64.061885 - 38.246432 - 64.141378 - 
+A problem at kernel 7 and iteration 16383 for actual value -nan but expected value 3.000000!
+A problem at kernel 8 and iteration 16383 for actual value -nan but expected value 3.000000!
+16384 - 5 - 10 - 80.246625 - 12.886343 - 60.043499 - 43.521451 - 25.238136 - 72.822458 - 109.170102 - 13.021206 - 97.814575 - 41.575986 - 75.794290 - 
+A problem at kernel 7 and iteration 16381 for actual value -nan but expected value 7.000000!
+A problem at kernel 8 and iteration 16381 for actual value -nan but expected value 7.000000!
+16384 - 9 - 10 - 95.741709 - 11.737682 - 46.772103 - 35.649066 - 20.362168 - 84.077911 - 176.721188 - 11.352338 - 163.200490 - 34.327855 - 164.457061 - 
+A problem at kernel 7 and iteration 16378 for actual value -nan but expected value 19.000000!
+A problem at kernel 8 and iteration 16378 for actual value -nan but expected value 19.000000!
+16384 - 27 - 10 - 57.525953 - 6.172088 - 29.934048 - 17.358071 - 11.892071 - 56.189876 - 374.168875 - 5.738246 - 308.167153 - 16.968955 - 358.456054 - 
+32768 - 1 - 10 - 41.797726 - 14.791604 - 36.469156 - 34.051673 - 24.779268 - 34.406340 - 39.567123 - 15.418224 - 36.539375 - 27.936609 - 35.668688 - 
+32768 - 3 - 10 - 96.934452 - 18.330295 - 72.649699 - 56.401169 - 32.655941 - 90.474708 - 124.631098 - 17.871401 - 117.624254 - 54.591742 - 114.050390 - 
+A problem at kernel 7 and iteration 32767 for actual value -nan but expected value 3.000000!
+A problem at kernel 8 and iteration 32767 for actual value -nan but expected value 3.000000!
+32768 - 5 - 10 - 103.113481 - 18.036714 - 77.917036 - 51.799313 - 27.165948 - 86.966824 - 177.642946 - 17.844968 - 170.514163 - 50.599042 - 170.649264 - 
+A problem at kernel 7 and iteration 32765 for actual value -nan but expected value 7.000000!
+A problem at kernel 8 and iteration 32765 for actual value -nan but expected value 7.000000!
+32768 - 9 - 10 - 108.773364 - 14.654067 - 65.815936 - 38.601358 - 26.114407 - 90.891958 - 279.979516 - 13.855622 - 259.887621 - 37.826275 - 265.263403 - 
+A problem at kernel 7 and iteration 32762 for actual value -nan but expected value 19.000000!
+A problem at kernel 8 and iteration 32762 for actual value -nan but expected value 19.000000!
+32768 - 27 - 10 - 60.502778 - 6.575879 - 32.425966 - 20.848488 - 14.063779 - 57.982695 - 521.807289 - 6.064631 - 429.353084 - 19.201153 - 450.740092 - 
+65536 - 1 - 10 - 75.670348 - 17.079825 - 43.420573 - 56.662529 - 38.909988 - 67.642349 - 93.169759 - 19.683603 - 85.338100 - 58.007533 - 88.930394 - 
+65536 - 3 - 10 - 134.825386 - 24.387452 - 102.378277 - 71.896091 - 39.424995 - 128.803023 - 218.193489 - 25.072753 - 212.767109 - 70.446804 - 210.948716 - 
+A problem at kernel 7 and iteration 65535 for actual value -nan but expected value 3.000000!
+A problem at kernel 8 and iteration 65535 for actual value -nan but expected value 3.000000!
+65536 - 5 - 10 - 144.639599 - 23.154803 - 91.541568 - 57.762707 - 39.339095 - 130.353377 - 309.825295 - 21.764414 - 294.206719 - 58.249234 - 312.404572 - 
+A problem at kernel 7 and iteration 65533 for actual value -nan but expected value 7.000000!
+A problem at kernel 8 and iteration 65533 for actual value -nan but expected value 7.000000!
+65536 - 9 - 10 - 129.207094 - 16.939849 - 72.794995 - 47.383009 - 33.633166 - 126.827454 - 442.019523 - 15.561067 - 431.007200 - 44.628960 - 393.724745 - 
+A problem at kernel 7 and iteration 65530 for actual value -nan but expected value 19.000000!
+A problem at kernel 8 and iteration 65530 for actual value -nan but expected value 19.000000!
+65536 - 27 - 10 - 62.765076 - 6.806473 - 34.769501 - 23.300620 - 15.449477 - 62.328837 - 696.405331 - 6.231033 - 634.692349 - 20.480945 - 694.434301 - 
+131072 - 1 - 10 - 103.158554 - 20.243942 - 88.964045 - 79.255988 - 47.649781 - 95.852636 - 138.911719 - 25.177719 - 128.018515 - 75.316810 - 131.037262 - 
+131072 - 3 - 10 - 179.609899 - 33.528155 - 120.977080 - 80.869901 - 55.397583 - 169.911894 - 314.010621 - 30.830403 - 247.710753 - 79.363463 - 310.843228 - 
+A problem at kernel 7 and iteration 131071 for actual value -nan but expected value 3.000000!
+A problem at kernel 8 and iteration 131071 for actual value -nan but expected value 3.000000!
+131072 - 5 - 10 - 171.319591 - 27.070055 - 108.216000 - 72.691688 - 50.816555 - 149.209168 - 434.013532 - 25.033977 - 409.410290 - 69.812807 - 410.237946 - 
+A problem at kernel 7 and iteration 131069 for actual value -nan but expected value 7.000000!
+A problem at kernel 8 and iteration 131069 for actual value -nan but expected value 7.000000!
+131072 - 9 - 10 - 139.740017 - 18.232736 - 81.040733 - 56.341204 - 38.743267 - 138.627455 - 573.369527 - 16.438628 - 451.610502 - 51.108605 - 557.142021 - 
+A problem at kernel 7 and iteration 131066 for actual value -nan but expected value 19.000000!
+A problem at kernel 8 and iteration 131066 for actual value -nan but expected value 19.000000!
+131072 - 27 - 10 - 63.784706 - 6.926688 - 36.271414 - 24.793041 - 16.245295 - 64.038429 - 803.442028 - 6.327726 - 768.594643 - 21.135733 - 745.264610 - 
+262144 - 1 - 10 - 137.857012 - 32.010074 - 116.265279 - 93.509580 - 55.557662 - 158.940307 - 196.544767 - 34.625145 - 210.508396 - 104.534609 - 221.816102 - 
+262144 - 3 - 10 - 201.803455 - 39.152147 - 125.742812 - 99.846397 - 70.840319 - 198.890200 - 409.382175 - 35.650008 - 348.289047 - 94.738882 - 381.350008 - 
+A problem at kernel 7 and iteration 262143 for actual value -nan but expected value 3.000000!
+A problem at kernel 8 and iteration 262143 for actual value -nan but expected value 3.000000!
+262144 - 5 - 10 - 176.854838 - 30.121881 - 118.658770 - 86.274918 - 59.888542 - 178.523427 - 526.945237 - 26.872103 - 512.366282 - 78.586936 - 501.174551 - 
+A problem at kernel 7 and iteration 262141 for actual value 8.000000 but expected value 7.000000!
+A problem at kernel 8 and iteration 262141 for actual value 8.000000 but expected value 7.000000!
+262144 - 9 - 10 - 141.230864 - 19.575217 - 91.745451 - 66.054135 - 44.720659 - 145.753539 - 654.697246 - 17.523918 - 654.318997 - 56.437024 - 647.623348 - 
+A problem at kernel 7 and iteration 262138 for actual value -nan but expected value 19.000000!
+A problem at kernel 8 and iteration 262138 for actual value -nan but expected value 19.000000!
+262144 - 27 - 10 - 64.446330 - 6.989132 - 36.950276 - 25.480085 - 16.592774 - 63.073166 - 772.904893 - 6.366569 - 811.761456 - 21.500799 - 525.355655 - 
+524288 - 1 - 10 - 155.265515 - 41.559878 - 138.401786 - 109.808255 - 72.738844 - 156.950736 - 236.199962 - 43.825910 - 232.526145 - 108.902439 - 237.094729 - 
+524288 - 3 - 10 - 217.019507 - 43.154574 - 155.760070 - 117.847025 - 55.606110 - 56.159599 - 465.784697 - 34.248951 - 108.643451 - 85.240217 - 465.906527 - 
+A problem at kernel 7 and iteration 524287 for actual value -nan but expected value 3.000000!
+A problem at kernel 8 and iteration 524287 for actual value -nan but expected value 3.000000!
+524288 - 5 - 10 - 161.244591 - 27.784860 - 138.703865 - 102.925266 - 71.343092 - 199.842144 - 592.649223 - 28.418041 - 175.572999 - 88.482682 - 590.872727 - 
+A problem at kernel 7 and iteration 524285 for actual value -nan but expected value 7.000000!
+A problem at kernel 8 and iteration 524285 for actual value -nan but expected value 7.000000!
+524288 - 9 - 10 - 143.059310 - 19.893109 - 95.882202 - 68.592400 - 46.187571 - 150.473315 - 722.429889 - 17.744506 - 709.542402 - 58.138668 - 711.997567 - 
+A problem at kernel 7 and iteration 524282 for actual value -nan but expected value 19.000000!
+A problem at kernel 8 and iteration 524282 for actual value -nan but expected value 19.000000!
+524288 - 27 - 10 - 65.204348 - 7.040418 - 37.606142 - 26.084825 - 16.976922 - 65.239680 - 889.082122 - 6.419845 - 890.820090 - 21.929740 - 893.566334 - 
+1048576 - 1 - 10 - 169.031744 - 49.396534 - 152.118305 - 123.609010 - 88.582502 - 184.810903 - 284.074525 - 51.071783 - 268.388817 - 122.425797 - 270.048119 - 
+A problem at kernel 7 and iteration 1048575 for actual value 3.000000 but expected value 2.000000!
+A problem at kernel 8 and iteration 1048575 for actual value 3.000000 but expected value 2.000000!
+1048576 - 3 - 10 - 195.092168 - 45.828611 - 172.272489 - 130.600776 - 93.660305 - 237.527652 - 530.500935 - 40.666670 - 524.851008 - 116.754057 - 523.996003 - 
+A problem at kernel 7 and iteration 1048574 for actual value 5.000000 but expected value 4.000000!
+A problem at kernel 8 and iteration 1048574 for actual value 5.000000 but expected value 4.000000!
+1048576 - 5 - 10 - 197.785014 - 32.694082 - 140.611565 - 102.281411 - 70.385850 - 208.120420 - 642.917923 - 28.933226 - 645.256843 - 88.852785 - 649.610460 - 
+A problem at kernel 7 and iteration 1048573 for actual value 8.000000 but expected value 7.000000!
+A problem at kernel 8 and iteration 1048573 for actual value 8.000000 but expected value 7.000000!
+1048576 - 9 - 10 - 149.950121 - 19.828964 - 96.125675 - 68.083418 - 45.807145 - 153.670097 - 776.406272 - 17.760392 - 757.273888 - 58.087815 - 766.770085 - 
+A problem at kernel 7 and iteration 1048569 for actual value 21.000000 but expected value 20.000000!
+A problem at kernel 8 and iteration 1048569 for actual value 21.000000 but expected value 20.000000!
+1048576 - 27 - 10 - 65.221686 - 7.061780 - 37.989590 - 26.390077 - 17.102599 - 65.937685 - 1042.571556 - 6.438223 - 1051.322202 - 22.065095 - 1037.359960 - 
+2097152 - 1 - 10 - 188.709960 - 53.336205 - 165.112422 - 130.970399 - 93.780535 - 201.253638 - 302.394351 - 53.801154 - 296.570668 - 128.891261 - 303.427961 - 
+A problem at kernel 7 and iteration 2097151 for actual value 3.000000 but expected value 2.000000!
+A problem at kernel 8 and iteration 2097151 for actual value 3.000000 but expected value 2.000000!
+2097152 - 3 - 10 - 226.203408 - 45.783158 - 174.379901 - 130.311202 - 92.393545 - 244.461486 - 564.270642 - 40.623407 - 564.181449 - 117.530139 - 565.490948 - 
+A problem at kernel 7 and iteration 2097150 for actual value 5.000000 but expected value 4.000000!
+A problem at kernel 8 and iteration 2097150 for actual value 5.000000 but expected value 4.000000!
+2097152 - 5 - 10 - 199.833055 - 32.504213 - 141.360157 - 101.840943 - 69.629206 - 212.594435 - 689.583005 - 28.811791 - 691.978572 - 89.292760 - 686.438243 - 
+A problem at kernel 7 and iteration 2097149 for actual value 8.000000 but expected value 7.000000!
+A problem at kernel 8 and iteration 2097149 for actual value 8.000000 but expected value 7.000000!
+2097152 - 9 - 10 - 149.157930 - 19.767269 - 96.292927 - 67.394484 - 45.595850 - 155.306310 - 814.790009 - 17.807934 - 812.265208 - 58.077600 - 810.302694 - 
+Error allocating for A4194304 - 1 - 10 - 191.861041 - 56.163418 - 171.780377 - 137.935727 - 100.191245 - 211.796506 - 326.814246 - 56.197442 - 321.506419 - 136.239571 - 321.334130 - 
+A problem at kernel 7 and iteration 4194303 for actual value 3.000000 but expected value 2.000000!
+A problem at kernel 8 and iteration 4194303 for actual value 3.000000 but expected value 2.000000!
+4194304 - 3 - 10 - 234.218319 - 46.393348 - 179.063302 - 133.962368 - 94.873962 - 249.890323 - 598.147932 - 41.075434 - 592.488265 - 120.025094 - 593.966113 - 
+A problem at kernel 7 and iteration 4194302 for actual value 5.000000 but expected value 4.000000!
+A problem at kernel 8 and iteration 4194302 for actual value 5.000000 but expected value 4.000000!
+4194304 - 5 - 10 - 204.165178 - 32.719536 - 143.522839 - 103.752442 - 70.509112 - 211.604285 - 718.697553 - 29.214062 - 719.182727 - 90.408499 - 716.942284 - 
+Error allocating for AError allocating for A8388608 - 1 - 10 - 199.224340 - 57.906221 - 168.729172 - 137.964366 - 102.226648 - 211.943184 - 333.582788 - 54.620941 - 331.032298 - 138.655673 - 331.015137 - 
+A problem at kernel 7 and iteration 8388607 for actual value 3.000000 but expected value 2.000000!
+A problem at kernel 8 and iteration 8388607 for actual value 3.000000 but expected value 2.000000!
+8388608 - 3 - 10 - 238.751314 - 46.065219 - 172.703047 - 136.816626 - 96.364288 - 259.063458 - 633.264176 - 42.197900 - 633.166484 - 122.378921 - 629.673548 - 
+Error allocating for AError allocating for AError allocating for A16777216 - 1 - 10 - 167.810197 - 58.730408 - 177.050254 - 144.233718 - 90.753513 - 219.263072 - 340.158523 - 56.873071 - 285.511177 - 127.382921 - 342.316500 - 
+Error allocating for AError allocating for AError allocating for AError allocating for A33554432 - 1 - 10 - 215.317721 - 62.811250 - 204.803490 - 162.354024 - 111.952502 - 246.351224 - 403.779474 - 61.942214 - 401.348456 - 158.580957 - 402.623199 - 
+Error allocating for AError allocating for AError allocating for AError allocating for A>Exit code: 0

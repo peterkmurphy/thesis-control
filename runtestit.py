@@ -22,7 +22,7 @@ else:
 # Now we try out the executables.
 
 for k in EFF_OPTIONS:
-    for j in ["d", "dmp", "dur", "dmpur"]: #OPENMP_OPTIONS:
+    for j in OPENMP_OPTIONS:
         ourFile = "./" + TESTDIRCREATE + j + "tucds" + k; 
         i = MINMATSIZE; # The minimum iteration amount
         print ourFile;

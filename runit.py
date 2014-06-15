@@ -18,7 +18,7 @@ if len(sys.argv) >= 3:
 else:
     MINMATSIZE = 16384;
     MAXMATSIZE = 4194304 #16384 2097152;
-    NOITERS = "3";
+    NOITERS = "20";
 
 # Now we try out the executables.
 

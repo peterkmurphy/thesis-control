@@ -18,13 +18,13 @@ if len(sys.argv) >= 3:
     NOITERS = str(int(sys.argv[3]));
 else:
     MINMATSIZE =  256;
-    MAXMATSIZE = 2097152 #33554432;
-    NOITERS = "20";
+    MAXMATSIZE = 4194304 #33554432;
+    NOITERS = "100";
 
 # Now we try out the executables.
 
 for k in ["3"]: #EFF_OPTIONS:
-    for j in ["mpur"]: #OPENMP_OPTIONS:
+    for j in ["mpur", "dmpur"]: #OPENMP_OPTIONS:
         ourFile = "./" + TIMEDOTPRODUCTCLCREATE + j + "dotproductcl" + k; 
         i = MINMATSIZE; # The minimum iteration amount
         print ourFile;

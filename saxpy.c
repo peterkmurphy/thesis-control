@@ -234,7 +234,7 @@ szSaxpyVect16, szSaxpyImage };
 // Code for images go here. But we'll remove it for now!
     
 	int iKernel;
-	for (iKernel = 0; iKernel < iNoKernels-1; iKernel++)
+	for (iKernel = 0; iKernel < iNoKernels; iKernel++)
 	{
 
 		for (i = 0; i < DATA_SIZE; i++)
